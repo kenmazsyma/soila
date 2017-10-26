@@ -38,9 +38,12 @@ func (t *CC) Init(stub shim.ChaincodeStubInterface) pb.Response {
 type invokeRoutineType func(shim.ChaincodeStubInterface, []string) (string, error)
 
 var invoke_list = map[string]invokeRoutineType{
-	"person.put":    person.Put,
-	"person.update": person.Update,
-	"person.get":    person.Get,
+	"person.put":               person.Put,
+	"person.update":            person.Update,
+	"person.get":               person.Get,
+	"person.add_activity":      person.AddActivity,
+	"person.add_reputation":    person.AddReputation,
+	"person.remove_reputation": person.RemoveReputation,
 }
 
 /***************************************************
@@ -69,30 +72,13 @@ func (t *CC) Invoke(stub shim.ChaincodeStubInterface) pb.Response {
 //  Query
 // ================================================
 
-type queryRoutineType func(shim.ChaincodeStubInterface, []string) (string, error)
-
-var query_list = map[string]queryRoutineType{
-	"person.get": person.Get,
-}
-
 /***************************************************
 [Query]
-description : invoke
+description : query
 parameters  :
    stub - chaincode interface
 return: response object
 ***************************************************/
 func (t *CC) Query(stub shim.ChaincodeStubInterface) pb.Response {
-	fmt.Println("CC.Query")
-	funcname, args := stub.GetFunctionAndParameters()
-	fmt.Printf("funcname:%s\n", funcname)
-	m := query_list[funcname]
-	if m == nil {
-		return shim.Error("Invalid function name.")
-	}
-	ret, err := m(stub, args)
-	if err != nil {
-		return shim.Error(err.Error())
-	}
-	return shim.Success([]byte(ret))
+	return shim.Error("Query interface was already removed.")
 }

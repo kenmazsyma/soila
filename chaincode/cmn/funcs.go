@@ -1,6 +1,8 @@
 package cmn
 
 import (
+	"crypto/sha1"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -28,6 +30,12 @@ func Get(stub shim.ChaincodeStubInterface, key string) (val interface{}, err err
 	}
 	err = json.Unmarshal(jsVal, &val)
 	return
+}
+
+func Sha1(v string) string {
+	h := sha1.New()
+	h.Write([]byte(v))
+	return hex.EncodeToString(h.Sum(nil))
 }
 
 //package main
