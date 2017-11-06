@@ -15,7 +15,7 @@ Promise.resolve().then(()=> {
 	client = new Client();
 	Client.setLogger({
 		debug : function(txt, txt2, txt3) {
-			var log = 'DEBUG';
+			/*var log = 'DEBUG';
 			for ( var i=0; i<arguments.length; i++) {
 				if (typeof arguments[i]==='string') {
 					log += ' : ' + arguments[i];
@@ -30,7 +30,7 @@ Promise.resolve().then(()=> {
 					}
 				}
 			}
-			console.log(log);
+			console.log(log);*/
 		},
 		info : function(txt) {
 			console.log('INFO : ' + txt)
@@ -43,10 +43,11 @@ Promise.resolve().then(()=> {
 		},
 	});
 	channel = client.newChannel('soila');
+	//let data = fs.readFileSync(path.join(__dirname, 'key/crypto-config/ordererOrganizations/soila.com/orderers/orderer.soila.com/msp/tlscacerts/tlsca.soila.com-cert.pem'));
 	//let data = fs.readFileSync(path.join(__dirname, 'key/crypto-config/ordererOrganizations/soila.com/msp/tlscacerts/tlsca.soila.com-cert.pem'));
-	let data = fs.readFileSync(path.join(__dirname, 'key/crypto-config/ordererOrganizations/soila.com/tlsca/tlsca.soila.com-cert.pem'));
+	//let data = fs.readFileSync(path.join(__dirname, 'key/crypto-config/ordererOrganizations/soila.com/tlsca/tlsca.soila.com-cert.pem'));
 	//let data = fs.readFileSync(path.join(__dirname, 'key/crypto-config/ordererOrganizations/soila.com/ca/ca.soila.com-cert.pem'));
-	let caroots = Buffer.from(data).toString();
+	//let caroots = Buffer.from(data).toString();
 
 	channel.addOrderer(
 		client.newOrderer(
@@ -57,10 +58,12 @@ Promise.resolve().then(()=> {
 			}*/
 		)
 	);
+	console.log('point1');
 	return Client.newDefaultKeyValueStore({
 		path: path.join(os.tmpdir(), 'hfc/hfc_org')
 	});
 }).then((store) => {
+	console.log('point2');
 	client.setStateStore(store);
 	var keyPath = path.join(__dirname, 'key/crypto-config/ordererOrganizations/soila.com/users/Admin@soila.com/msp/keystore');
 	var keyPEM = Buffer.from(readAllFiles(keyPath)[0]).toString();
