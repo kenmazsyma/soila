@@ -1,0 +1,25 @@
+OrdererOrgs:
+  - Name: Orderer
+    Domain: soila.com
+    CA:
+        Country: JP
+        Province: Tokyo
+        Locality: Koto
+    Specs:
+      - Hostname: orderer
+
+PeerOrgs:
+  - Name: Org1
+    Domain: org1.soila.com
+    #Template:
+    #    Count: 1
+    #Users:
+    #    Count: 1
+
+  - Name: Org2
+    Domain: org2.soila.com
+    #Template:
+    #    Count: 1
+    #Users:
+    #    Count: 1
+
