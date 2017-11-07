@@ -47,128 +47,135 @@ FabricCliBase = class {
 		// TODO:temporary
 	}
 
-	init(cb, cberr) {
-		Promise.resolve().then(()=> {
-			this.client = new Client();
-			this.channel = this.client.newChannel(this.channelID);
-			this.channel.addOrderer(
-				this.client.newOrderer(this.conf.orderer.url)
-			);
-			return Client.newDefaultKeyValueStore({
-				path: path.join(os.tmpdir(), 'fabricclibase/orderer1')
-			});
-		}).then((store) => {
-			this.client.setStateStore(store);
-			let keyPath = path.join(__dirname, this.conf.orderer.admin.keystore);
-			let keyPEM = Buffer.from(readAllFiles(keyPath)[0]).toString();
-			let crtPath = path.join(__dirname, this.conf.orderer.admin.signcerts);
-			let crtPEM = readAllFiles(crtPath)[0];
-			return this.client.createUser({
-				username : this.conf.orderer.admin.username,
-				mspid : this.conf.orderer.mspid,
-				cryptoContent: {
-					privateKeyPEM: keyPEM.toString(),
-					signedCertPEM: crtPEM.toString()
-				}
-			});
-		}).then((admin) => {
-			return this.channel.getGenesisBlock({
-				txId: this.client.newTransactionID(),
-				orderer: {
-					url : this.conf.orderer.url
-				}
-			});
-		}).then((block)=> {
-			this.genesis_block = block;
-			this.client._userContext = null;
-			let keyPath = path.join(__dirname, this.conf.org1.admin.keystore);
-			let keyPEM = Buffer.from(readAllFiles(keyPath)[0]).toString();
-			let crtPath = path.join(__dirname, this.conf.org1.admin.signcerts);
-			let crtPEM = readAllFiles(crtPath)[0];
-			var cryptoSuite = Client.newCryptoSuite();
-			cryptoSuite.setCryptoKeyStore(Client.newCryptoKeyStore(
-				{
-					path: path.join(os.tmpdir(), 'hfc/hfc_org1')
-				}
-			));
-			this.client.setCryptoSuite(cryptoSuite);
-			return this.client.createUser({
-				username: this.conf.org1.admin.username,
-				mspid: this.conf.org1.mspid,
-				cryptoContent: {
-					privateKeyPEM: keyPEM.toString(),
-					signedCertPEM: crtPEM.toString()
-				}
-			});
-		}).then((admin) => {
-			let data = fs.readFileSync(path.join(__dirname, this.conf.org1.cert));
-			this.targets = [
-				this.client.newPeer(
-					this.conf.org1.rpc,
+	init() {
+		return new Promise((resolve, reject) => {
+			Promise.resolve().then(()=> {
+				this.client = new Client();
+				this.channel = this.client.newChannel(this.channelID);
+				this.channel.addOrderer(
+					this.client.newOrderer(this.conf.orderer.url)
+				);
+				return Client.newDefaultKeyValueStore({
+					path: path.join(os.tmpdir(), 'fabricclibase/orderer1')
+				});
+			}).then((store) => {
+				this.client.setStateStore(store);
+				let keyPath = path.join(__dirname, this.conf.orderer.admin.keystore);
+				let keyPEM = Buffer.from(readAllFiles(keyPath)[0]).toString();
+				let crtPath = path.join(__dirname, this.conf.orderer.admin.signcerts);
+				let crtPEM = readAllFiles(crtPath)[0];
+				return this.client.createUser({
+					username : this.conf.orderer.admin.username,
+					mspid : this.conf.orderer.mspid,
+					cryptoContent: {
+						privateKeyPEM: keyPEM.toString(),
+						signedCertPEM: crtPEM.toString()
+					}
+				});
+			}).then((admin) => {
+				return this.channel.getGenesisBlock({
+					txId: this.client.newTransactionID(),
+					orderer: {
+						url : this.conf.orderer.url
+					}
+				});
+			}).then((block)=> {
+				this.genesis_block = block;
+				this.client._userContext = null;
+				let keyPath = path.join(__dirname, this.conf.org1.admin.keystore);
+				let keyPEM = Buffer.from(readAllFiles(keyPath)[0]).toString();
+				let crtPath = path.join(__dirname, this.conf.org1.admin.signcerts);
+				let crtPEM = readAllFiles(crtPath)[0];
+				var cryptoSuite = Client.newCryptoSuite();
+				cryptoSuite.setCryptoKeyStore(Client.newCryptoKeyStore(
+					{
+						path: path.join(os.tmpdir(), 'hfc/hfc_org1')
+					}
+				));
+				this.client.setCryptoSuite(cryptoSuite);
+				return this.client.createUser({
+					username: this.conf.org1.admin.username,
+					mspid: this.conf.org1.mspid,
+					cryptoContent: {
+						privateKeyPEM: keyPEM.toString(),
+						signedCertPEM: crtPEM.toString()
+					}
+				});
+			}).then((admin) => {
+				let data = fs.readFileSync(path.join(__dirname, this.conf.org1.cert));
+				this.targets = [
+					this.client.newPeer(
+						this.conf.org1.rpc,
+						{
+							pem: Buffer.from(data).toString(),
+							'ssl-target-name-override': this.conf.org1.host
+						}
+					)
+				];
+				let request = {
+					targets : this.targets,
+					block : this.genesis_block,
+					txId : this.client.newTransactionID()
+				};
+				this.eventhub = this.client.newEventHub();
+				this.eventhub.setPeerAddr(
+					this.conf.org1.evtrpc,
 					{
 						pem: Buffer.from(data).toString(),
 						'ssl-target-name-override': this.conf.org1.host
 					}
-				)
-			];
-			let request = {
-				targets : this.targets,
-				block : this.genesis_block,
-				txId : this.client.newTransactionID()
-			};
-			this.eventhub = this.client.newEventHub();
-			this.eventhub.setPeerAddr(
-				this.conf.org1.evtrpc,
-				{
-					pem: Buffer.from(data).toString(),
-					'ssl-target-name-override': this.conf.org1.host
-				}
-			);
-			this.eventhub.connect();
-			cb&&cb();
-		}).catch((err) => {
-			console.log(err);
-			cberr&&cberr(err);
+				);
+				this.eventhub.connect();
+				resolve();
+			}).catch((err) => {
+				console.log(err);
+				reject(err);
+			});
 		});
 	}
 
-	joinChannel(cb) {
-		let txPromise = new Promise((resolve, reject) => {
-			let handle = setTimeout(reject, 30000);
-			this.eventhub.registerBlockEvent((block) => {
-				clearTimeout(handle);
-				if(block.data.data.length === 1) {
-					var channel_header = block.data.data[0].payload.header.channel_header;
-					if (channel_header.channel_id === 'soila') {
-						console.log('The new channel has been successfully joined on peer '+ eh.getPeerAddr());
-						resolve();
+	joinChannel() {
+		return new Promise((resolve, reject) => {
+			let txPromise = new Promise((reso, reje) => {
+				let handle = setTimeout(reje, 30000);
+				this.eventhub.registerBlockEvent((block) => {
+					clearTimeout(handle);
+					if(block.data.data.length === 1) {
+						var channel_header = block.data.data[0].payload.header.channel_header;
+						if (channel_header.channel_id === 'soila') {
+							console.log('The new channel has been successfully joined on peer '+ eh.getPeerAddr());
+							reso();
+						}
+						else {
+							console.log('The new channel has not been succesfully joined');
+							reje();
+						}
 					}
-					else {
-						console.log('The new channel has not been succesfully joined');
-						reject();
-					}
-				}
+				});
 			});
-		});
-		let sendPromise = this.channel.joinChannel(request);
-		Promise.all([txPromise, sendPromise]).then((result) => {
-			this.isConnect = true;
-			cb();
-		}).catch((err) => {
-			console.log(err);
+			let sendPromise = this.channel.joinChannel(request);
+			Promise.all([txPromise, sendPromise]).then((result) => {
+				this.isConnect = true;
+				resolve();
+			}).catch((err) => {
+				reject(err);
+			});
 		});
 	}
 	
-	prepareChannel(cb) {
-		this.channel.initialize().then((result) => {
-			this.isConnect = true;
-			cb();
-		}).catch((err) => {
-			console.log(err);
+	prepareChannel() {
+		return new Promise((resolve, reject) => {
+			this.channel.initialize().then((result) => {
+				this.isConnect = true;
+				resolve();
+			}).catch((err) => {
+				console.log(err);
+				reject(err);
+			});
 		});
 	}
 
-	invoke(ccid, funcname, args, cb, cberr) {
+	invoke(ccid, funcname, args) {
 		let request = {
 			chaincodeId : ccid,
 			targets : this.targets,
@@ -176,11 +183,44 @@ FabricCliBase = class {
 			args: args,
 			txId: this.client.newTransactionID()
 		};
-		channel.sendTransactionProposal(request).then((results) => {
-			cb&&cb(results);
-		}).catch((err) => {
-			cberr&&cberr(err);
-		});
+		return this.channel.sendTransactionProposal(request);
+	}
+
+	install(ccid, path, ver) {
+		let request = {
+			targets: this.targets,
+			chaincodePath: path,
+			chaincodeId: ccid,
+			chaincodeVersion: ver
+		};
+		return this.client.installChaincode(request);
+//		this.client.installChaincode(request).then((results) => {
+//			let proposalResponse = results[0];
+//			//let proposal = results[1];
+//			proposalResponse&&proposalResponse.forEach((elm) => {
+//				let status = elm.response&&elm.response.status;
+//				if (status === 200) {
+//					console.log('successfully installed proposal');
+//				} else {
+//					console.log('failed to install proposal:' + status);
+//				}
+//			});
+//			cb&&cb(results);
+//		}).catch((err) => {
+//			console.log(err);
+//			cberr&&cberr(err);
+//		});
+	}
+
+	instantiate(ccid, ver, args) {
+		let request = {
+			txId : this.client.newTransactionID(),
+			chaincodeId: ccid,
+			chaincodeVersion: ver,
+			targets: this.targets,
+			args: args
+		};
+		return this.channel.sendInstantiateProposal(request);
 	}
 };
 
