@@ -28,7 +28,8 @@ FabricCliBase = class {
 					signcerts : 'key/crypto-config/ordererOrganizations/soila.com/users/Admin@soila.com/msp/signcerts'
 				}
 			},
-			org1 : {
+			org : [
+			{
 				mspid : 'Org1MSP',
 				admin : {
 					username : 'peerOrg1Admin',
@@ -39,10 +40,18 @@ FabricCliBase = class {
 				evtrpc : 'grpc://localhost:7053',
 				host : 'peer0.org1.soila.com',
 				cert : 'key/crypto-config/peerOrganizations/org1.soila.com/tlsca/tlsca.org1.soila.com-cert.pem'
-
-			},
-			org2 : {
-			}
+			},{
+				mspid : 'Org2MSP',
+				admin : {
+					username : 'peerOrg2Admin',
+					keystore : 'key/crypto-config/peerOrganizations/org2.soila.com/users/Admin@org2.soila.com/msp/keystore',
+					signcerts : 'key/crypto-config/peerOrganizations/org2.soila.com/users/Admin@org2.soila.com/msp/signcerts'
+				},
+				rpc : 'grpc://localhost:8051',
+				evtrpc : 'grpc://localhost:8053',
+				host : 'peer0.org2.soila.com',
+				cert : 'key/crypto-config/peerOrganizations/org2.soila.com/tlsca/tlsca.org2.soila.com-cert.pem'
+			}]
 		};
 		// TODO:temporary
 	}
@@ -82,49 +91,57 @@ FabricCliBase = class {
 			}).then((block)=> {
 				this.genesis_block = block;
 				this.client._userContext = null;
-				let keyPath = path.join(__dirname, this.conf.org1.admin.keystore);
-				let keyPEM = Buffer.from(readAllFiles(keyPath)[0]).toString();
-				let crtPath = path.join(__dirname, this.conf.org1.admin.signcerts);
-				let crtPEM = readAllFiles(crtPath)[0];
-				var cryptoSuite = Client.newCryptoSuite();
-				cryptoSuite.setCryptoKeyStore(Client.newCryptoKeyStore(
-					{
-						path: path.join(os.tmpdir(), 'hfc/hfc_org1')
-					}
-				));
-				this.client.setCryptoSuite(cryptoSuite);
-				return this.client.createUser({
-					username: this.conf.org1.admin.username,
-					mspid: this.conf.org1.mspid,
-					cryptoContent: {
-						privateKeyPEM: keyPEM.toString(),
-						signedCertPEM: crtPEM.toString()
-					}
+				var cres = [];
+				[this.conf.org[1]].forEach((d) => {
+					let keyPath = path.join(__dirname, d.admin.keystore);
+					let keyPEM = Buffer.from(readAllFiles(keyPath)[0]).toString();
+					let crtPath = path.join(__dirname, d.admin.signcerts);
+					let crtPEM = readAllFiles(crtPath)[0];
+					var cryptoSuite = Client.newCryptoSuite();
+					cryptoSuite.setCryptoKeyStore(Client.newCryptoKeyStore(
+						{
+							path: path.join(os.tmpdir(), 'hfc/'+d.mspid)
+						}
+					));
+					this.client.setCryptoSuite(cryptoSuite);
+					cres.push(
+						this.client.createUser({
+							username: d.admin.username,
+							mspid: d.mspid,
+							cryptoContent: {
+								privateKeyPEM: keyPEM.toString(),
+								signedCertPEM: crtPEM.toString()
+							}
+						})
+					);
 				});
+				return Promise.all(cres);
 			}).then((admin) => {
-				let data = fs.readFileSync(path.join(__dirname, this.conf.org1.cert));
-				this.targets = [
-					this.client.newPeer(
-						this.conf.org1.rpc,
+				this.conf.org.forEach((d) => {
+					let data = fs.readFileSync(path.join(__dirname, d.cert));
+					this.targets = [
+						this.client.newPeer(
+							d.rpc,
+							{
+								pem: Buffer.from(data).toString(),
+								'ssl-target-name-override': d.host
+							}
+						)
+					];
+					let request = {
+						targets : this.targets,
+						block : this.genesis_block,
+						txId : this.client.newTransactionID()
+					};
+					this.eventhub = this.client.newEventHub();
+					this.eventhub.setPeerAddr(
+						d.evtrpc,
 						{
 							pem: Buffer.from(data).toString(),
-							'ssl-target-name-override': this.conf.org1.host
+							'ssl-target-name-override': d.host
 						}
-					)
-				];
-				let request = {
-					targets : this.targets,
-					block : this.genesis_block,
-					txId : this.client.newTransactionID()
-				};
-				this.eventhub = this.client.newEventHub();
-				this.eventhub.setPeerAddr(
-					this.conf.org1.evtrpc,
-					{
-						pem: Buffer.from(data).toString(),
-						'ssl-target-name-override': this.conf.org1.host
-					}
-				);
+					);
+				});
 				this.eventhub.connect();
 				resolve();
 			}).catch((err) => {
