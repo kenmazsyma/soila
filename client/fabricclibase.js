@@ -92,7 +92,7 @@ FabricCliBase = class {
 				this.genesis_block = block;
 				this.client._userContext = null;
 				var cres = [];
-				[this.conf.org[1]].forEach((d) => {
+				[this.conf.org[0]].forEach((d) => {
 					let keyPath = path.join(__dirname, d.admin.keystore);
 					let keyPEM = Buffer.from(readAllFiles(keyPath)[0]).toString();
 					let crtPath = path.join(__dirname, d.admin.signcerts);
@@ -117,7 +117,7 @@ FabricCliBase = class {
 				});
 				return Promise.all(cres);
 			}).then((admin) => {
-				this.conf.org.forEach((d) => {
+				[this.conf.org[0]].forEach((d) => {
 					let data = fs.readFileSync(path.join(__dirname, d.cert));
 					this.targets = [
 						this.client.newPeer(
@@ -153,6 +153,11 @@ FabricCliBase = class {
 
 	joinChannel() {
 		return new Promise((resolve, reject) => {
+			let request = {
+				targets : this.targets,
+				block : this.genesis_block,
+				txId : this.client.newTransactionID()
+			};
 			let txPromise = new Promise((reso, reje) => {
 				let handle = setTimeout(reje, 30000);
 				this.eventhub.registerBlockEvent((block) => {
@@ -160,7 +165,7 @@ FabricCliBase = class {
 					if(block.data.data.length === 1) {
 						var channel_header = block.data.data[0].payload.header.channel_header;
 						if (channel_header.channel_id === 'soila') {
-							console.log('The new channel has been successfully joined on peer '+ eh.getPeerAddr());
+							console.log('The new channel has been successfully joined on peer '+ this.eventhub.getPeerAddr());
 							reso();
 						}
 						else {
@@ -232,7 +237,7 @@ FabricCliBase = class {
 	instantiate(ccid, ver, args) {
 		let request = {
 			txId : this.client.newTransactionID(),
-			chaincodeId: ccid,
+			chaincodeId : ccid,
 			chaincodeVersion: ver,
 			targets: this.targets,
 			args: args

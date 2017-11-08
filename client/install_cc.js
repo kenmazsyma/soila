@@ -13,9 +13,11 @@ function sleep(time) {
 
 
 cli.init().then(() => {
-	return cli.prepareChannel();
+	//return cli.prepareChannel();
+	return cli.joinChannel();
 }).then(() => {
-	return cli.install('soila_chain', 'github.com/kenmazsyma/soila/chaincode/chaincode', '0');
+	//return cli.install('soila_chain', 'github.com/kenmazsyma/soila/chaincode/chaincode', '0');
+	return cli.install('soila_chain', 'github.com/kenmazsyma/soila/chaincode', '0');
 }).then((ret) => {
 	console.log('successfully installed chaincode' + JSON.stringify(ret));
 	return sleep(5000);
