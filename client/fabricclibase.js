@@ -117,9 +117,10 @@ FabricCliBase = class {
 				});
 				return Promise.all(cres);
 			}).then((admin) => {
+				this.targets = [];
 				[this.conf.org[0]].forEach((d) => {
 					let data = fs.readFileSync(path.join(__dirname, d.cert));
-					this.targets = [
+					this.targets.push(
 						this.client.newPeer(
 							d.rpc,
 							{
@@ -127,7 +128,7 @@ FabricCliBase = class {
 								'ssl-target-name-override': d.host
 							}
 						)
-					];
+					);
 					let request = {
 						targets : this.targets,
 						block : this.genesis_block,
@@ -243,6 +244,17 @@ FabricCliBase = class {
 			args: args
 		};
 		return this.channel.sendInstantiateProposal(request);
+	}
+
+	term() {
+		this.eventhub.disconnect();
+		this.client = null;
+		this.channelID = null;
+		this.channel = null;
+		this.genesis_block = null;
+		this.targets = null;
+		this.eventhub = null;
+		this.isConnect = false;
 	}
 };
 

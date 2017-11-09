@@ -18,12 +18,13 @@ cli.init().then(() => {
 	return cli.prepareChannel();
 }).then(() => {
 	console.log('###instantiate###');
-	return cli.instantiate('soila_chain', '0');
+	return cli.instantiate('soila_chain', '0', []);
 }).then((ret) => {
 	console.log('successfully instantiated chaincode' + JSON.stringify(ret));
-	return sleep(5000);
+	cli.term();
 }).catch((err) => {
 	console.log(err);
+	cli.term();
 });
 
 
