@@ -1,30 +1,18 @@
 'use_strict';
 
-//var sv = require('./cli/sv');
-//sv.init();
-var FabricCliBase = require('./fabricclibase');
-var cli = new FabricCliBase('soila');
+let $$ = require('./prepare.js');
 
-function sleep(time) {
-	return new Promise((resolve, reject) => {
-		setTimeout(() => {
-			resolve();
-		}, time);
-	});
-}
-
-
-cli.init().then(() => {
-	return cli.prepareChannel();
+$$.cli.init().then(() => {
+	return $$.cli.prepareChannel();
 }).then(() => {
 	console.log('###instantiate###');
-	return cli.instantiate('soila_chain', '0', []);
+	return $$.cli.instantiate('soila_chain', '0', []);
 }).then((ret) => {
 	console.log('successfully instantiated chaincode' + JSON.stringify(ret));
-	cli.term();
+	$$.cli.term();
 }).catch((err) => {
-	console.log(err);
-	cli.term();
+	console.log('failed to instantiate chaincode:' + err);
+	$$.cli.term();
 });
 
 

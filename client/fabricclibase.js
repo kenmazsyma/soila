@@ -9,7 +9,7 @@ var os = require('os');
 
 FabricCliBase = class {
 
-	constructor(chid) {
+	constructor(chid, conf) {
 		this.client = null;
 		this.channelID = chid;
 		this.channel = null;
@@ -17,43 +17,7 @@ FabricCliBase = class {
 		this.targets = null;
 		this.eventhub = null;
 		this.isConnect = false;
-		// TODO:temporary
-		this.conf = {
-			orderer : {
-				url : 'grpc://localhost:7050',
-				mspid : 'OrdererMSP',
-				admin : {
-					username : 'ordererAdmin',
-					keystore : 'key/crypto-config/ordererOrganizations/soila.com/users/Admin@soila.com/msp/keystore',
-					signcerts : 'key/crypto-config/ordererOrganizations/soila.com/users/Admin@soila.com/msp/signcerts'
-				}
-			},
-			org : [
-			{
-				mspid : 'Org1MSP',
-				admin : {
-					username : 'peerOrg1Admin',
-					keystore : 'key/crypto-config/peerOrganizations/org1.soila.com/users/Admin@org1.soila.com/msp/keystore',
-					signcerts : 'key/crypto-config/peerOrganizations/org1.soila.com/users/Admin@org1.soila.com/msp/signcerts'
-				},
-				rpc : 'grpc://localhost:7051',
-				evtrpc : 'grpc://localhost:7053',
-				host : 'peer0.org1.soila.com',
-				cert : 'key/crypto-config/peerOrganizations/org1.soila.com/tlsca/tlsca.org1.soila.com-cert.pem'
-			},{
-				mspid : 'Org2MSP',
-				admin : {
-					username : 'peerOrg2Admin',
-					keystore : 'key/crypto-config/peerOrganizations/org2.soila.com/users/Admin@org2.soila.com/msp/keystore',
-					signcerts : 'key/crypto-config/peerOrganizations/org2.soila.com/users/Admin@org2.soila.com/msp/signcerts'
-				},
-				rpc : 'grpc://localhost:8051',
-				evtrpc : 'grpc://localhost:8053',
-				host : 'peer0.org2.soila.com',
-				cert : 'key/crypto-config/peerOrganizations/org2.soila.com/tlsca/tlsca.org2.soila.com-cert.pem'
-			}]
-		};
-		// TODO:temporary
+		this.conf = conf;
 	}
 
 	init() {
@@ -92,7 +56,8 @@ FabricCliBase = class {
 				this.genesis_block = block;
 				this.client._userContext = null;
 				var cres = [];
-				[this.conf.org[0]].forEach((d) => {
+			//	[this.conf.org[0]].forEach((d) => {
+				this.conf.org.forEach((d) => {
 					let keyPath = path.join(__dirname, d.admin.keystore);
 					let keyPEM = Buffer.from(readAllFiles(keyPath)[0]).toString();
 					let crtPath = path.join(__dirname, d.admin.signcerts);
@@ -118,7 +83,9 @@ FabricCliBase = class {
 				return Promise.all(cres);
 			}).then((admin) => {
 				this.targets = [];
-				[this.conf.org[0]].forEach((d) => {
+				this.eventhub = [];
+				//[this.conf.org[0]].forEach((d) => {
+				this.conf.org.forEach((d) => {
 					let data = fs.readFileSync(path.join(__dirname, d.cert));
 					this.targets.push(
 						this.client.newPeer(
@@ -134,16 +101,17 @@ FabricCliBase = class {
 						block : this.genesis_block,
 						txId : this.client.newTransactionID()
 					};
-					this.eventhub = this.client.newEventHub();
-					this.eventhub.setPeerAddr(
+					var hub = this.client.newEventHub();
+					this.eventhub.push(hub);
+					hub.setPeerAddr(
 						d.evtrpc,
 						{
 							pem: Buffer.from(data).toString(),
 							'ssl-target-name-override': d.host
 						}
 					);
+					hub.connect();
 				});
-				this.eventhub.connect();
 				resolve();
 			}).catch((err) => {
 				console.log(err);
@@ -159,30 +127,34 @@ FabricCliBase = class {
 				block : this.genesis_block,
 				txId : this.client.newTransactionID()
 			};
-			let txPromise = new Promise((reso, reje) => {
-				let handle = setTimeout(reje, 30000);
-				this.eventhub.registerBlockEvent((block) => {
-					clearTimeout(handle);
-					if(block.data.data.length === 1) {
-						var channel_header = block.data.data[0].payload.header.channel_header;
-						if (channel_header.channel_id === 'soila') {
-							console.log('The new channel has been successfully joined on peer '+ this.eventhub.getPeerAddr());
-							reso();
+			let txPromise = [];
+			this.eventhub.forEach((hub) => {
+				txPromise.push(new Promise((reso, reje) => {
+					let handle = setTimeout(reje, 30000);
+					hub.registerBlockEvent((block) => {
+						clearTimeout(handle);
+						if(block.data.data.length === 1) {
+							let ch_header = block.data.data[0].payload.header.channel_header;
+							if (ch_header.channel_id === 'soila') {
+								console.log('The new channel has been successfully joined on peer '+ hub.getPeerAddr());
+								reso();
+							}
+							else {
+								console.log('The new channel has not been succesfully joined');
+							}
 						}
-						else {
-							console.log('The new channel has not been succesfully joined');
-							reje();
-						}
-					}
-				});
+						reje();
+					});
+				}));
 			});
 			let sendPromise = this.channel.joinChannel(request);
-			Promise.all([txPromise, sendPromise]).then((result) => {
+			txPromise.push(sendPromise);
+			Promise.all(txPromise).then((result) => {
 				this.isConnect = true;
 				resolve();
-			}).catch((err) => {
-				reject(err);
-			});
+			}, (rslt)=>{ 
+				reject(rslt) 
+			});	
 		});
 	}
 	
@@ -191,7 +163,7 @@ FabricCliBase = class {
 			this.channel.initialize().then((result) => {
 				this.isConnect = true;
 				resolve();
-			}).catch((err) => {
+			}, (err) => {
 				console.log(err);
 				reject(err);
 			});
@@ -247,7 +219,9 @@ FabricCliBase = class {
 	}
 
 	term() {
-		this.eventhub.disconnect();
+		this.eventhub.forEach((hub) => {
+			hub.disconnect();
+		});
 		this.client = null;
 		this.channelID = null;
 		this.channel = null;
