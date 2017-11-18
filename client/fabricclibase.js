@@ -113,23 +113,19 @@ FabricCliBase = class {
 					hub.connect();
 				});
 				resolve();
-			}).then(()=> {
-				console.log('prepare creating channel');
-				let envelope = fs.readFileSync(path.join(__dirname, './tx/soila.tx'));
-				console.log('1');
-				let channelConfig = this.client.extractChannelConfig(envelope);
-				console.log('2');
-				let sig = this.client.signChannelConfig(channelConfig);
-				console.log('3');
-				let request = {
-					config : channelConfig,
-					signatures : [sig],
-					name : 'soila',
-					orderer : this.orderer,
-					txId : this.client.newTransactionID()
-				};
-				console.log('4');
-				return this.client.createChannel(request);
+//			}).then(()=> {
+//				console.log('prepare creating channel');
+//				let envelope = fs.readFileSync(path.join(__dirname, './tx/soila.tx'));
+//				let channelConfig = this.client.extractChannelConfig(envelope);
+//				let sig = this.client.signChannelConfig(channelConfig);
+//				let request = {
+//					config : channelConfig,
+//					signatures : [sig],
+//					name : 'soila',
+//					orderer : this.orderer,
+//					txId : this.client.newTransactionID()
+//				};
+//				return this.client.createChannel(request);
 			}).catch((err) => {
 				console.log('lasterr:' + err);
 				reject(err);
@@ -238,39 +234,52 @@ FabricCliBase = class {
 		};
 		console.log(this.channel.getName());
 		return this.channel.sendInstantiateProposal(request).then((results)=> {
-			let txPromise = [];
-			this.eventhub.forEach((hub) => {
-				txPromise.push(new Promise((resolve, reject) => {
-					let handle = setTimeout(() => {
-						this.term();
-						reject();
-					}, 30000);
-					let deployId = request.txId.getTransactionID();
-					hub.registerTxEvent(deployId, (tx, code) => {
-						clearTimeout(handle);
-						hub.unregisterTxEvent(deployId);
-						hub.disconnect();
-						if (code !== 'VALID') {
-							console.log('The chaincode instantiate transaction was invalid, code = ' + code);
+			var proposalResponses = results[0];
+			var proposal = results[1];
+			var all_good = true;
+			for (var i in proposalResponses) {
+				let one_good = false;
+				if (proposalResponses && proposalResponses[i].response &&
+					proposalResponses[i].response.status === 200) {
+					one_good = true;
+					console.log('instantiate proposal was good');
+				} else {
+					console.log('instantiate proposal was bad');
+				}
+				all_good = all_good & one_good;
+			}
+			if (all_good) {
+				let txPromise = [];
+				this.eventhub.forEach((hub) => {
+					txPromise.push(new Promise((resolve, reject) => {
+						let handle = setTimeout(() => {
+							this.term();
 							reject();
-						} else {
-							console.log('The chaincode instantiate transaction was valid.');
-							resolve();
-						}
-					});
-				}));
-			});
-			let req = {
-				proposalResponses: results[0],
-				proposal: results[1]
-			};
-			let sendPromise = this.channel.sendTransaction(req);
-			return Promise.all([sendPromise].concat(txPromise)).then((results) => {
-				console.log('Event promise all complete and testing complete');
-				return results[0]; // the first returned value is from the 'sendPromise' which is from the 'sendTransaction()' call
-			}).catch((err) => {
-				console.log('Failed to send instantiate transaction and get notifications within the timeout period. ' + err);
-				return 'Failed to send instantiate transaction and get notifications within the timeout period.';
+						}, 30000);
+						let deployId = request.txId.getTransactionID();
+						hub.registerTxEvent(deployId, (tx, code) => {
+							clearTimeout(handle);
+							hub.unregisterTxEvent(deployId);
+							hub.disconnect();
+							if (code !== 'VALID') {
+								console.log('The chaincode instantiate transaction was invalid, code = ' + code);
+								reject();
+							} else {
+								console.log('The chaincode instantiate transaction was valid.');
+								resolve();
+							}
+						});
+					}));
+				});
+				let req = {
+					proposalResponses: results[0],
+					proposal: results[1]
+				};
+				let sendPromise = this.channel.sendTransaction(req);
+				return Promise.all([sendPromise].concat(txPromise));
+			}
+			return new Promise((resolve, reject) => {
+				reject('Failed to send instantiate Proposal or receive valid response. Response null or status is not 200. exiting...');
 			});
 		});
 	}
