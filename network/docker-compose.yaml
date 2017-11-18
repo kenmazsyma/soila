@@ -1,0 +1,91 @@
+version: '2'
+
+services:
+  orderer.soila.com:
+    container_name: orderer.soila.com
+    image: hyperledger/fabric-orderer
+    environment:
+      - ORDERER_GENERAL_LOGLEVEL=debug
+      - ORDERER_GENERAL_LISTENADDRESS=orderer.soila.com
+      - ORDERER_GENERAL_GENESISMETHOD=file
+      - ORDERER_GENERAL_GENESISFILE=soila.block
+      - ORDERER_GENERAL_LOCALMSPID=OrdererMSP
+      - ORDERER_GENERAL_LOCALMSPDIR=/etc/hyperledger/msp
+      - CORE_LOGGING_LEVEL=DEBUG
+      - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+      - GRPC_TRACE=all,
+      - GRPC_VERBOSITY=debug
+      - CORE_VM_DOCKER_ATTACHSTDOUT=true
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric
+    command: orderer
+    volumes:
+      - ../client/key/crypto-config/ordererOrganizations/soila.com/orderers/orderer.soila.com/msp:/etc/hyperledger/msp
+      - ../client/tx/soila.block:/etc/hyperledger/fabric/soila.block
+    ports:
+      - 7050:7050
+
+  peer0.org1.soila.com:
+    container_name: peer0.org1.soila.com
+    image: hyperledger/fabric-peer
+    environment:
+      - GOPATH=/opt/gopath
+      - CORE_PEER_ID=peer0.org1.soila.com
+      - CORE_PEER_ADDRESS=peer0.org1.soila.com:7051
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.org1.soila.com:7051
+      #- CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.org2.soila.com:8051
+      - CORE_PEER_LOCALMSPID=Org1MSP
+      - CORE_PEER_ENDORSER_ENABLED=true
+      - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+      - CORE_LOGGING_LEVEL=DEBUG
+      - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/msp
+      - GRPC_TRACE=all,
+      - GRPC_VERBOSITY=debug
+      - CORE_VM_DOCKER_ATTACHSTDOUT=true
+      - CORE_PEER_ADDRESSAUTODETECT=true
+    volumes:
+        - /var/run/:/host/var/run/
+        - ../chaincode/:/opt/gopath/src/github.com/kenmazsyma/soila/chaincode
+        - ../client/key/crypto-config/peerOrganizations/org1.soila.com/users/Admin@org1.soila.com/msp:/etc/hyperledger/msp
+        - ../:/opt/gopath/src/github.com/kenmazsyma/soila/
+    working_dir: /opt/gopath/src/github.com/kenmazsyma/soila/peer
+    command: peer node start -o orderer.soila.com:7050
+    #peer node start --peer-chaincodedev=true -o orderer.soila.com:7050
+    ports:
+      - 7051:7051
+      - 7053:7053
+    depends_on:
+      - orderer.soila.com
+
+
+  peer0.org2.soila.com:
+    container_name: peer0.org2.soila.com
+    image: hyperledger/fabric-peer
+    environment:
+      - GOPATH=/opt/gopath
+      - CORE_PEER_ID=peer0.org2.soila.com
+      - CORE_PEER_ADDRESS=peer0.org2.soila.com:7051
+      - CORE_PEER_ENDORSER_ENABLED=true
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.org2.soila.com:7051
+      #- CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.org1.soila.com:7051
+      - CORE_PEER_LOCALMSPID=Org2MSP
+      - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+      - CORE_LOGGING_LEVEL=DEBUG
+      - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/msp
+      - GRPC_TRACE=all,
+      - GRPC_VERBOSITY=debug
+      - CORE_VM_DOCKER_ATTACHSTDOUT=true
+      - CORE_PEER_ADDRESSAUTODETECT=true
+    volumes:
+        - /var/run/:/host/var/run/
+        - ../chaincode/:/opt/gopath/src/github.com/kenmazsyma/soila/chaincode
+        #- ../client/key/crypto-config/ordererOrganizations/soila.com/orderers/orderer.soila.com/msp:/etc/hyperledger/msp
+        #- ../client/key/crypto-config/peerOrganizations/org1.soila.com/peers/peer0.org1.soila.com/msp:/etc/hyperledger/msp
+        - ../client/key/crypto-config/peerOrganizations/org2.soila.com/users/Admin@org2.soila.com/msp:/etc/hyperledger/msp
+        - ../:/opt/gopath/src/github.com/kenmazsyma/soila/
+    working_dir: /opt/gopath/src/github.com/kenmazsyma/soila/peer
+    command: peer node start -o orderer.soila.com:7050
+    ports:
+      - 8051:7051
+      - 8053:7053
+    depends_on:
+      - orderer.soila.com
