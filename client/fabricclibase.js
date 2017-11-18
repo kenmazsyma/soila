@@ -15,9 +15,10 @@ FabricCliBase = class {
 		this.channel = null;
 		this.genesis_block = null;
 		this.targets = null;
-		this.eventhub = null;
+		this.eventhub = [];
 		this.isConnect = false;
 		this.conf = conf;
+		this.orderer = null;
 	}
 
 	init() {
@@ -25,9 +26,8 @@ FabricCliBase = class {
 			Promise.resolve().then(()=> {
 				this.client = new Client();
 				this.channel = this.client.newChannel(this.channelID);
-				this.channel.addOrderer(
-					this.client.newOrderer(this.conf.orderer.url)
-				);
+				this.orderer = this.client.newOrderer(this.conf.orderer.url);
+				this.channel.addOrderer(this.orderer);
 				return Client.newDefaultKeyValueStore({
 					path: path.join(os.tmpdir(), 'fabricclibase/orderer1')
 				});
@@ -98,7 +98,7 @@ FabricCliBase = class {
 					);
 					let request = {
 						targets : this.targets,
-						block : this.genesis_block,
+						block : /*this.genesis_block*/ null,
 						txId : this.client.newTransactionID()
 					};
 					var hub = this.client.newEventHub();
@@ -113,8 +113,25 @@ FabricCliBase = class {
 					hub.connect();
 				});
 				resolve();
+			}).then(()=> {
+				console.log('prepare creating channel');
+				let envelope = fs.readFileSync(path.join(__dirname, './tx/soila.tx'));
+				console.log('1');
+				let channelConfig = this.client.extractChannelConfig(envelope);
+				console.log('2');
+				let sig = this.client.signChannelConfig(channelConfig);
+				console.log('3');
+				let request = {
+					config : channelConfig,
+					signatures : [sig],
+					name : 'soila',
+					orderer : this.orderer,
+					txId : this.client.newTransactionID()
+				};
+				console.log('4');
+				return this.client.createChannel(request);
 			}).catch((err) => {
-				console.log(err);
+				console.log('lasterr:' + err);
 				reject(err);
 			});
 		});
@@ -161,6 +178,7 @@ FabricCliBase = class {
 	prepareChannel() {
 		return new Promise((resolve, reject) => {
 			this.channel.initialize().then((result) => {
+				console.log(JSON.stringify(result));
 				this.isConnect = true;
 				resolve();
 			}, (err) => {
@@ -176,8 +194,10 @@ FabricCliBase = class {
 			targets : this.targets,
 			fcn: funcname,
 			args: args,
+			chainId : 'soila',
 			txId: this.client.newTransactionID()
 		};
+		console.log(this.channel.getName());
 		return this.channel.sendTransactionProposal(request);
 	}
 
@@ -188,6 +208,7 @@ FabricCliBase = class {
 			chaincodeId: ccid,
 			chaincodeVersion: ver
 		};
+		console.log(this.channel.getName());
 		return this.client.installChaincode(request);
 //		this.client.installChaincode(request).then((results) => {
 //			let proposalResponse = results[0];
@@ -215,7 +236,43 @@ FabricCliBase = class {
 			targets: this.targets,
 			args: args
 		};
-		return this.channel.sendInstantiateProposal(request);
+		console.log(this.channel.getName());
+		return this.channel.sendInstantiateProposal(request).then((results)=> {
+			let txPromise = [];
+			this.eventhub.forEach((hub) => {
+				txPromise.push(new Promise((resolve, reject) => {
+					let handle = setTimeout(() => {
+						this.term();
+						reject();
+					}, 30000);
+					let deployId = request.txId.getTransactionID();
+					hub.registerTxEvent(deployId, (tx, code) => {
+						clearTimeout(handle);
+						hub.unregisterTxEvent(deployId);
+						hub.disconnect();
+						if (code !== 'VALID') {
+							console.log('The chaincode instantiate transaction was invalid, code = ' + code);
+							reject();
+						} else {
+							console.log('The chaincode instantiate transaction was valid.');
+							resolve();
+						}
+					});
+				}));
+			});
+			let req = {
+				proposalResponses: results[0],
+				proposal: results[1]
+			};
+			let sendPromise = this.channel.sendTransaction(req);
+			return Promise.all([sendPromise].concat(txPromise)).then((results) => {
+				console.log('Event promise all complete and testing complete');
+				return results[0]; // the first returned value is from the 'sendPromise' which is from the 'sendTransaction()' call
+			}).catch((err) => {
+				console.log('Failed to send instantiate transaction and get notifications within the timeout period. ' + err);
+				return 'Failed to send instantiate transaction and get notifications within the timeout period.';
+			});
+		});
 	}
 
 	term() {
@@ -227,7 +284,7 @@ FabricCliBase = class {
 		this.channel = null;
 		this.genesis_block = null;
 		this.targets = null;
-		this.eventhub = null;
+		this.eventhub = [];
 		this.isConnect = false;
 	}
 };

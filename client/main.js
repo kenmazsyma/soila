@@ -6,7 +6,7 @@ let $$ = require('./prepare.js');
 
 $$.cli.init().then(() => {
 	return $$.cli.prepareChannel();
-}).then(() => {
+}).then((ret) => {
 	console.log('###invoke1###');
 	return $$.cli.invoke('soila_chain', 'person.put', ['123', 'testdata']);
 }).then((ret) => {
