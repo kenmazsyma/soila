@@ -1,20 +1,20 @@
 'use_strict';
 
-let logger = require('../common/logger');
+let log = require('../common/logger')('api.list');
 
 module.exports = {
 	cls : {
-		user : require('./user')
+		person : require('./person')
 	},
 	call : function(cn, mn, json) {
 		return new Promise((resolve, reject) => {
-			logger.debug.trace('api.call:' + cn + ':' + mn);
+			log.debug('api.call:' + cn + ':' + mn);
 			let cls = this.cls[cn];
 			if (cls===undefined||cls[mn]===undefined) {
 				reject('api not found');
+				return;
 			}
 			try {
-				console.log(json);
 				let prm = JSON.parse(json);
 				cls[mn](prm).then(rslt => {
 					resolve(JSON.stringify(rslt));

@@ -1,6 +1,9 @@
 let log4js = require('log4js');
-module.exports = {
-    debug: log4js.getLogger('system'),
-    info: log4js.getLogger('access'),
-    error: log4js.getLogger('error')
-}
+let allconf = require('config');
+
+log4js.configure(allconf.Logger);
+
+module.exports = (name => {
+    return log4js.getLogger(name);
+    //error: log4js.getLogger('error')
+});

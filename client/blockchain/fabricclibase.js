@@ -5,7 +5,7 @@ var path = require('path');
 var util = require('util');
 var fs = require('fs');
 var os = require('os');
-
+var log = require('../common/logger')('blockchain.fabricclientbase');
 
 FabricCliBase = class {
 
@@ -127,7 +127,8 @@ FabricCliBase = class {
 //				};
 //				return this.client.createChannel(request);
 			}).catch((err) => {
-				console.log('lasterr:' + err);
+				log.error('FabricClientBase.init:');
+				log.error(err);
 				reject(err);
 			});
 		});
@@ -149,12 +150,14 @@ FabricCliBase = class {
 						if(block.data.data.length === 1) {
 							let ch_header = block.data.data[0].payload.header.channel_header;
 							if (ch_header.channel_id === 'soila') {
-								console.log('The new channel has been successfully joined on peer '+ hub.getPeerAddr());
+								log.info('The new channel has been successfully joined on peer '+ hub.getPeerAddr());
 								reso();
 							}
 							else {
-								console.log('The new channel has not been succesfully joined');
+								log.error('The new channel has not been succesfully joined');
 							}
+						} else {
+							log.error('Response of registerBlockEvent is not correct.');
 						}
 						reje();
 					});
@@ -174,11 +177,12 @@ FabricCliBase = class {
 	prepareChannel() {
 		return new Promise((resolve, reject) => {
 			this.channel.initialize().then((result) => {
-				console.log(JSON.stringify(result));
+				log.info('channel is successfully initiated:');
 				this.isConnect = true;
 				resolve();
 			}, (err) => {
-				console.log(err);
+				log.error('FabricClientBase.prepareChannel:');
+				log.error(err);
 				reject(err);
 			});
 		});
@@ -193,7 +197,6 @@ FabricCliBase = class {
 			chainId : 'soila',
 			txId: this.client.newTransactionID()
 		};
-		console.log(this.channel.getName());
 		return this.channel.sendTransactionProposal(request);
 	}
 
@@ -204,7 +207,6 @@ FabricCliBase = class {
 			chaincodeId: ccid,
 			chaincodeVersion: ver
 		};
-		console.log(this.channel.getName());
 		return this.client.installChaincode(request);
 //		this.client.installChaincode(request).then((results) => {
 //			let proposalResponse = results[0];
@@ -232,7 +234,6 @@ FabricCliBase = class {
 			targets: this.targets,
 			args: args
 		};
-		console.log(this.channel.getName());
 		return this.channel.sendInstantiateProposal(request).then((results)=> {
 			var proposalResponses = results[0];
 			var proposal = results[1];
@@ -242,9 +243,9 @@ FabricCliBase = class {
 				if (proposalResponses && proposalResponses[i].response &&
 					proposalResponses[i].response.status === 200) {
 					one_good = true;
-					console.log('instantiate proposal was good');
+					log.info('instantiate proposal was good');
 				} else {
-					console.log('instantiate proposal was bad');
+					log.error('instantiate proposal was bad');
 				}
 				all_good = all_good & one_good;
 			}
@@ -262,10 +263,10 @@ FabricCliBase = class {
 							hub.unregisterTxEvent(deployId);
 							hub.disconnect();
 							if (code !== 'VALID') {
-								console.log('The chaincode instantiate transaction was invalid, code = ' + code);
+								log.error('The chaincode instantiate transaction was invalid, code = ' + code);
 								reject();
 							} else {
-								console.log('The chaincode instantiate transaction was valid.');
+								log.info('The chaincode instantiate transaction was valid.');
 								resolve();
 							}
 						});
@@ -285,16 +286,21 @@ FabricCliBase = class {
 	}
 
 	term() {
-		this.eventhub.forEach((hub) => {
-			hub.disconnect();
+		return new Promise(resolve => {
+			setTimeout(()=>{
+				resolve();
+			}, 2000);
+			this.eventhub.forEach((hub) => {
+				hub.disconnect();
+			});
+			this.client = null;
+			this.channelID = null;
+			this.channel = null;
+			this.genesis_block = null;
+			this.targets = null;
+			this.eventhub = [];
+			this.isConnect = false;
 		});
-		this.client = null;
-		this.channelID = null;
-		this.channel = null;
-		this.genesis_block = null;
-		this.targets = null;
-		this.eventhub = [];
-		this.isConnect = false;
 	}
 };
 

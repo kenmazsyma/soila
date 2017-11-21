@@ -4,6 +4,7 @@ let http = require('http');
 let fs = require('fs');
 let allconf = require('config');
 let api = require('../api/list');
+let log = require('../common/logger')('sv.sv');
 
 module.exports = {
 	run : function() {
@@ -57,7 +58,9 @@ function return404(res, e) {
 	if (e===undefined) {
 		e = 'Not Found';
 	}
-	res.write(JSON.stringify(e));
+	let info = JSON.stringify(e);
+	log.error(info);
+	res.write(info);
 	return res.end();　
 }
 
