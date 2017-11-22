@@ -40,6 +40,18 @@ func person_generateKey(stub shim.ChaincodeStubInterface, id string) (string, er
 	//	fmt.Printf("EE:%x(%s)\n", sv, string(sv))
 	// TODO:set creator id
 	sv := "TEST"
+	o, err := stub.GetCreator()
+	if err != nil {
+		fmt.Println("Error at GetCreator")
+		return "", err
+	}
+	js, err := cmn.ToJSON(o)
+	if err != nil {
+		fmt.Println("Error at ToJSON")
+		return "", err
+	} else {
+		fmt.Println("Creator:" + js)
+	}
 	return stub.CreateCompositeKey(KEY_TYPE, []string{string(sv), id})
 }
 

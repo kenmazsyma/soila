@@ -38,6 +38,11 @@ func Sha1(v string) string {
 	return hex.EncodeToString(h.Sum(nil))
 }
 
+func ToJSON(o interface{}) (string, error) {
+	data, err := json.Marshal(o)
+	return string(data), err
+}
+
 //package main
 //
 //import (

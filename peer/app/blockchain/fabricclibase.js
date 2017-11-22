@@ -285,6 +285,66 @@ FabricCliBase = class {
 		});
 	}
 
+	upgrade(ccid, ver, args) {
+		let request = {
+			txId : this.client.newTransactionID(),
+			chaincodeId : ccid,
+			chaincodeVersion: ver,
+			targets: this.targets,
+			args: args
+		};
+		return this.channel.sendUpgradeProposal(request).then((results)=> {
+			var proposalResponses = results[0];
+			var proposal = results[1];
+			var all_good = true;
+			for (var i in proposalResponses) {
+				let one_good = false;
+				if (proposalResponses && proposalResponses[i].response &&
+					proposalResponses[i].response.status === 200) {
+					one_good = true;
+					log.info('upgrading proposal was good');
+				} else {
+					log.error('upgrading proposal was bad');
+				}
+				all_good = all_good & one_good;
+			}
+			if (all_good) {
+				let txPromise = [];
+				this.eventhub.forEach((hub) => {
+					txPromise.push(new Promise((resolve, reject) => {
+						let handle = setTimeout(() => {
+							this.term();
+							reject();
+						}, 30000);
+						let deployId = request.txId.getTransactionID();
+						hub.registerTxEvent(deployId, (tx, code) => {
+							clearTimeout(handle);
+							hub.unregisterTxEvent(deployId);
+							hub.disconnect();
+							if (code !== 'VALID') {
+								log.error('Transaction for upgrading chaincode was invalid, code = ' + code);
+								reject();
+							} else {
+								log.info('Transaction for upgrading chaincode was valid.');
+								resolve();
+							}
+						});
+					}));
+				});
+				let req = {
+					proposalResponses: results[0],
+					proposal: results[1]
+				};
+				let sendPromise = this.channel.sendTransaction(req);
+				return Promise.all([sendPromise].concat(txPromise));
+			}
+			return new Promise((resolve, reject) => {
+				reject('Failed to send upgrade Proposal or receive valid response. Response null or status is not 200. exiting...');
+			});
+		});
+	}
+
+
 	term() {
 		return new Promise(resolve => {
 			setTimeout(()=>{

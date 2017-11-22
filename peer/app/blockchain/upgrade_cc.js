@@ -7,12 +7,12 @@ $$.cli.init().then(() => {
 	return $$.cli.prepareChannel();
 }).then(() => {
 	log.info('successfully prepared channel.');
-	return $$.cli.instantiate('soila_chain', '1', ['init', 'a', '1']);
+	return $$.cli.upgrade('soila_chain', '1', ['init', 'a', '1']);
 }).then((ret) => {
-	log.info('successfully instantiated chaincode');
+	log.info('successfully upgraded chaincode');
 	$$.cli.term();
 }).catch((err) => {
-	log.error('failed to instantiate chaincode:' + err);
+	log.error('failed to upgrade chaincode:' + err);
 	$$.cli.term();
 });
 

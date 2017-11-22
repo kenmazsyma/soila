@@ -1,3 +1,7 @@
+/*
+Package main provides chaincode for soila_chain.
+*/
+
 package main
 
 import (
@@ -10,6 +14,10 @@ import (
 // ================================================
 // main
 // ================================================
+
+type CC struct{}
+
+// main is a function for executing chaincode for soila_chain
 func main() {
 	err := shim.Start(new(CC))
 	if err != nil {
@@ -17,15 +25,11 @@ func main() {
 	}
 }
 
-type CC struct{}
-
-/***************************************************
-[Init]
-description : initialize
-parameters  :
-   stub - chaincode interface
-return: response object
-***************************************************/
+// Init is a function for initializing chaincode for soila_chain
+// parameters :
+//   stub - chaincode interface
+// return:
+//   response object
 func (t *CC) Init(stub shim.ChaincodeStubInterface) pb.Response {
 	fmt.Println("CC.Init")
 	return shim.Success(nil)
