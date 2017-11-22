@@ -4,6 +4,7 @@ let db = require('../db/db');
 let cmn = require('./cmn');
 let log = require('../common/logger')('api.person');
 let bc = require('../blockchain/prepare');
+let util = require('../common/util');
 
 module.exports = {
 	create : function(prm) {
@@ -27,7 +28,7 @@ module.exports = {
 					log.debug('query for inserting to person table failed.');
 					resolve({
 						result : 'ERROR',
-						error : (e.code!==undefined) ? e.code + ':' + e.detail : e
+						error : JSON.stringify(e)
 					});
 				});
 			} catch (e) {
@@ -35,7 +36,18 @@ module.exports = {
 				reject(e);
 			}
 		}).then(() => {
-			return bc.invoke('soila_chain', 'person.put',[prm.id, JSON.stringify(prm)])
+			try {
+			return bc.cli.invoke('soila_chain', 'person.put', [prm.id, JSON.stringify(prm)])
+				.then(rslt => {
+					for ( var i in rslt) {
+						log.info(i + ':' + rslt[i]);
+					}
+					//console.log(util.str.b2s(rslt.payload.data));
+					return Promise.resolve(rslt);
+				});
+			} catch (e) {
+				log.error(e);
+			}
 		});
 	},
 	delete : function(prm) {

@@ -1,16 +1,15 @@
 'use_strict';
 
-let $$ = require('./prepare.js');
-//var sv = require('./cli/sv');
-//sv.init();
+let $$ = require('./prepare');
+let log = require('../common/logger')('bc_main');
 
 $$.cli.init().then(() => {
 	return $$.cli.prepareChannel();
 }).then((ret) => {
-	console.log('###invoke1###');
+	log.info('channel is successfully prepared.');
 	return $$.cli.invoke('soila_chain', 'person.put', ['123', 'testdata']);
 }).then((ret) => {
-	console.log('successfully invoked person.put' + JSON.stringify(ret));
+	log.info('invoking person.put is successfully called.' + JSON.stringify(ret));
 //	return sleep(5000);
 //}).then(() => {
 //	console.log('###invoke2###');
