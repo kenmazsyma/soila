@@ -1,0 +1,49 @@
+ChainEnv:
+    orderer:
+        url: 'grpc://localhost:7050'
+        mspid: 'OrdererMSP'
+        admin:
+            username: 'ordererAdmin'
+            keystore: '../../../network/data/key/crypto-config/ordererOrganizations/soila.com/users/Admin@soila.com/msp/keystore'
+            signcerts: '../../../network/data/key/crypto-config/ordererOrganizations/soila.com/users/Admin@soila.com/msp/signcerts'
+
+    org1:
+        mspid: 'Org1MSP'
+        admin: 
+            username: 'peerOrg1Admin'
+            keystore: '../../../network/data/key/crypto-config/peerOrganizations/org1.soila.com/users/Admin@org1.soila.com/msp/keystore'
+            signcerts: '../../../network/data/key/crypto-config/peerOrganizations/org1.soila.com/users/Admin@org1.soila.com/msp/signcerts'
+        rpc: 'grpc://localhost:7051'
+        evtrpc: 'grpc://localhost:7053'
+        host: 'peer0.org1.soila.com'
+        cert: '../../../network/data/key/crypto-config/peerOrganizations/org1.soila.com/tlsca/tlsca.org1.soila.com-cert.pem'
+    org2:
+        mspid: 'Org2MSP'
+        admin:
+            username: 'peerOrg2Admin'
+            keystore: '../../../network/data/key/crypto-config/peerOrganizations/org2.soila.com/users/Admin@org2.soila.com/msp/keystore'
+            signcerts: '../../../network/data/key/crypto-config/peerOrganizations/org2.soila.com/users/Admin@org2.soila.com/msp/signcerts'
+        rpc: 'grpc://localhost:8051'
+        evtrpc: 'grpc://localhost:8053'
+        host: 'peer0.org2.soila.com'
+        cert: '../../../network/data/key/crypto-config/peerOrganizations/org2.soila.com/tlsca/tlsca.org2.soila.com-cert.pem'
+DBEnv:
+    user: 'soila'
+    pass: ''
+    host: 'localhost'
+    port: 5432
+    dbname: 'soila'
+WebEnv:
+    url: '127.0.0.1'
+    port: 8800
+Logger:
+    appenders:
+        out:
+            type: 'console'
+            layout:
+                type: 'basic'
+    categories:
+        default:
+            appenders: 
+                - out
+            level: 'debug'

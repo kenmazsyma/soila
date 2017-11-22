@@ -19,8 +19,8 @@ services:
     working_dir: /opt/gopath/src/github.com/hyperledger/fabric
     command: orderer
     volumes:
-      - ../client/key/crypto-config/ordererOrganizations/soila.com/orderers/orderer.soila.com/msp:/etc/hyperledger/msp
-      - ../client/tx/soila.block:/etc/hyperledger/fabric/soila.block
+      - ./data/key/crypto-config/ordererOrganizations/soila.com/orderers/orderer.soila.com/msp:/etc/hyperledger/msp
+      - ./data/tx/soila.block:/etc/hyperledger/fabric/soila.block
     ports:
       - 7050:7050
 
@@ -45,7 +45,7 @@ services:
     volumes:
         - /var/run/:/host/var/run/
         - ../chaincode/:/opt/gopath/src/github.com/kenmazsyma/soila/chaincode
-        - ../client/key/crypto-config/peerOrganizations/org1.soila.com/users/Admin@org1.soila.com/msp:/etc/hyperledger/msp
+        - ./data/key/crypto-config/peerOrganizations/org1.soila.com/users/Admin@org1.soila.com/msp:/etc/hyperledger/msp
         - ../:/opt/gopath/src/github.com/kenmazsyma/soila/
     working_dir: /opt/gopath/src/github.com/kenmazsyma/soila/peer
     command: peer node start -o orderer.soila.com:7050
@@ -78,9 +78,9 @@ services:
     volumes:
         - /var/run/:/host/var/run/
         - ../chaincode/:/opt/gopath/src/github.com/kenmazsyma/soila/chaincode
-        #- ../client/key/crypto-config/ordererOrganizations/soila.com/orderers/orderer.soila.com/msp:/etc/hyperledger/msp
-        #- ../client/key/crypto-config/peerOrganizations/org1.soila.com/peers/peer0.org1.soila.com/msp:/etc/hyperledger/msp
-        - ../client/key/crypto-config/peerOrganizations/org2.soila.com/users/Admin@org2.soila.com/msp:/etc/hyperledger/msp
+        #- ./data/key/crypto-config/ordererOrganizations/soila.com/orderers/orderer.soila.com/msp:/etc/hyperledger/msp
+        #- ./data/key/crypto-config/peerOrganizations/org1.soila.com/peers/peer0.org1.soila.com/msp:/etc/hyperledger/msp
+        - ./data/key/crypto-config/peerOrganizations/org2.soila.com/users/Admin@org2.soila.com/msp:/etc/hyperledger/msp
         - ../:/opt/gopath/src/github.com/kenmazsyma/soila/
     working_dir: /opt/gopath/src/github.com/kenmazsyma/soila/peer
     command: peer node start -o orderer.soila.com:7050
