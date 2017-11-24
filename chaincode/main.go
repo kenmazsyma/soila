@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	pb "github.com/hyperledger/fabric/protos/peer"
+	"github.com/kenmazsyma/soila/chaincode/log"
 	"github.com/kenmazsyma/soila/chaincode/person"
 )
 
@@ -19,19 +20,20 @@ type CC struct{}
 
 // main is a function for executing chaincode for soila_chain
 func main() {
+	log.Init("soila_chain", log.LEVEL_DEBUG)
 	err := shim.Start(new(CC))
 	if err != nil {
-		fmt.Printf("Error starting Simple chaincode: %s", err)
+		log.Error("Error starting Simple chaincode: " + err.Error())
 	}
 }
 
 // Init is a function for initializing chaincode for soila_chain
-// parameters :
-//   stub - chaincode interface
-// return:
-//   response object
+//   parameters :
+//     stub - chaincode interface
+//   return :
+//     response object
 func (t *CC) Init(stub shim.ChaincodeStubInterface) pb.Response {
-	fmt.Println("CC.Init")
+	log.Debug("CC.Init")
 	return shim.Success(nil)
 }
 
@@ -50,15 +52,13 @@ var invoke_list = map[string]invokeRoutineType{
 	"person.remove_reputation": person.RemoveReputation,
 }
 
-/***************************************************
-[Invoke]
-description : invoke
-parameters  :
-   stub - chaincode interface
-return: response object
-***************************************************/
+// Invoke is a function for executing chaincode for soila_chain
+//   parameters :
+//     stub - chaincode interface
+//   return :
+//     response object
 func (t *CC) Invoke(stub shim.ChaincodeStubInterface) pb.Response {
-	fmt.Println("CC.Invoke")
+	log.Debug("CC.Invoke")
 	funcname, args := stub.GetFunctionAndParameters()
 	fmt.Printf("NAME:%s\n", funcname)
 	m := invoke_list[funcname]
@@ -76,13 +76,7 @@ func (t *CC) Invoke(stub shim.ChaincodeStubInterface) pb.Response {
 //  Query
 // ================================================
 
-/***************************************************
-[Query]
-description : query
-parameters  :
-   stub - chaincode interface
-return: response object
-***************************************************/
+// Query is a deprecated in Fabric v1.0.
 func (t *CC) Query(stub shim.ChaincodeStubInterface) pb.Response {
 	return shim.Error("Query interface was already removed.")
 }

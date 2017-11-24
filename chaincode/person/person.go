@@ -1,14 +1,17 @@
+/*
+Package person provides chaincode for managing person data.
+*/
+
 package person
 
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	"github.com/kenmazsyma/soila/chaincode/cmn"
+	"github.com/kenmazsyma/soila/chaincode/log"
+	"github.com/kenmazsyma/soila/chaincode/peer"
 )
-
-type Person struct{}
 
 type PersonReputation struct {
 	Setter  string
@@ -16,69 +19,47 @@ type PersonReputation struct {
 	Type    string
 }
 
-type PersonRec struct {
+type Person struct {
+	Id         string
+	Peer       []byte
 	Ver        []string
 	Activity   []string
 	Reputation []PersonReputation
 }
 
-var KEY_TYPE = "PERSON"
+const KEY_TYPE = "PERSON"
 
-/***************************************************
-[person_genearteKey]
-description : generate key for Person
-parameters  :
-   stub - chaincode interface
-   id - person id
-return: response object
-***************************************************/
-func person_generateKey(stub shim.ChaincodeStubInterface, id string) (string, error) {
-	//	sv, err := stub.GetCreator()
-	//	if err != nil {
-	//		return "", err
-	//	}
-	//	fmt.Printf("EE:%x(%s)\n", sv, string(sv))
-	// TODO:set creator id
-	sv := "TEST"
-	o, err := stub.GetCreator()
-	if err != nil {
-		fmt.Println("Error at GetCreator")
-		return "", err
-	}
-	js, err := cmn.ToJSON(o)
-	if err != nil {
-		fmt.Println("Error at ToJSON")
-		return "", err
-	} else {
-		fmt.Println("Creator:" + js)
-	}
-	return stub.CreateCompositeKey(KEY_TYPE, []string{string(sv), id})
+// genearteKey is a function for generating key from id of PERSON
+//   parameters :
+//     stub - object for accessing ledgers from chaincode
+//     id - id of PERSON
+//   return :
+//     - key
+//     - whether error object or nil
+func generateKey(stub shim.ChaincodeStubInterface, id string) (string, error) {
+	return stub.CreateCompositeKey(KEY_TYPE, []string{id})
 }
 
-/***************************************************
-[get_and_check]
-description : generate key for Person
-parameters  :
-   stub - chaincode interface
-   args - parameters
-   validlen - valid length of args
-return:
-	rec - Person correspond to person id
-	key - key of Person
-	err - err object
-***************************************************/
-func get_and_check(stub shim.ChaincodeStubInterface, args []string, validlen int) (rec *PersonRec, key string, err error) {
+// get_and_check is a function for getting data of PERSON
+//   parameters :
+//     stub - object for accessing ledgers from chaincode
+//     args - parameters received from client
+//     validlen - valid length of args
+//   return :
+//     - PERSON object
+//     - key
+//     - whether error object or nil
+func get_and_check(stub shim.ChaincodeStubInterface, args []string, validlen int) (rec *Person, key string, err error) {
 	if len(args) != validlen {
 		err = errors.New("Invalid Arguments")
 		return
 	}
 	// get ID from blockchain
-	key, err = person_generateKey(stub, args[0])
+	key, err = generateKey(stub, args[0])
 	if err != nil {
 		return
 	}
 	// check if data is already exists.
-	fmt.Printf("KEY:%s\n", key)
 	val, err := stub.GetState(key)
 	if err != nil {
 		return
@@ -87,32 +68,29 @@ func get_and_check(stub shim.ChaincodeStubInterface, args []string, validlen int
 		err = errors.New("data is not exists.")
 		return
 	}
-	data := PersonRec{}
+	data := Person{}
 	err = json.Unmarshal(val, &data)
 	rec = &data
 	return
 }
 
-/***************************************************
-[Put]
-description : add Person object to blockchain
-parameters  :
-   stub - chaincode interface
-   args - [personid, data]
-return:
-   1:response data
-   2:error object if error occured
-***************************************************/
+// Put is a function for registering PERSON to ledger
+//   parameters :
+//     stub - object for accessing ledgers from chaincode
+//     args - [personid, data]
+//   return :
+//     - response data
+//     - error object if error occured
 func Put(stub shim.ChaincodeStubInterface, args []string) (string, error) {
 	if len(args) != 2 {
 		return "", errors.New("Invalid Arguments")
 	}
-	// get ID from blockchain
-	key, err := person_generateKey(stub, args[0])
+	log.Info("start:")
+	key, err := generateKey(stub, args[0])
 	if err != nil {
 		return "", err
 	}
-	fmt.Printf("KEY:%s\n", key)
+	log.Debug("KEY:" + key)
 	// check if data is already exists.
 	val, err := stub.GetState(key)
 	if err != nil {
@@ -121,102 +99,130 @@ func Put(stub shim.ChaincodeStubInterface, args []string) (string, error) {
 	if val != nil {
 		return "", errors.New("data is already exists.")
 	}
-	// put data into blockchain
-	data := PersonRec{
+	log.Debug(string(val))
+	peerid, err := peer.GetId(stub)
+	if err != nil {
+		return "", err
+	}
+	log.Debug(string(peerid))
+	// put data into ledger
+	data := Person{
+		Id:         args[0],
+		Peer:       peerid,
 		Ver:        []string{cmn.Sha1(args[1])},
 		Activity:   []string{},
 		Reputation: []PersonReputation{},
 	}
 	err = cmn.Put(stub, key, data)
-	return "", nil
+	return "", err
 }
 
-/***************************************************
-[Update]
-description : update Person object
-parameters  :
-   stub - chaincode interface
-   args - [personid, data]
-return:
-   1:response data
-   2:error object if error occured
-***************************************************/
+// Update is a function for updating PERSON object
+//   parameters :
+//     stub - object for accessing ledgers from chaincode
+//     args - [personid, data]
+//   return :
+//     - response data
+//     - error object if error occured
 func Update(stub shim.ChaincodeStubInterface, args []string) (string, error) {
 	data, key, err := get_and_check(stub, args, 2)
 	if err != nil {
 		return "", err
 	}
-	// put data into blockchain
+	log.Debug(key)
+	valid, err := peer.CompareId(stub, data.Peer)
+	if err != nil {
+		return "", err
+	}
+	// peer id is different from sender id
+	if !valid {
+		return "", errors.New("Person is owned by another peer.")
+	}
+	// put data into ledger
 	(*data).Ver = append((*data).Ver, cmn.Sha1(args[1]))
 	err = cmn.Put(stub, key, (*data))
-	return "", nil
+	return "", err
 }
 
-/***************************************************
-[Get]
-description : get value correspond to the key
-parameters  :
-   stub - chaincode interface
-   args - personid
-return: error string if error occured
-***************************************************/
+// Get is a function for getting PERSON object
+//   parameters  :
+//     stub - object for accessing ledgers from chaincode
+//     args - personid
+//   return :
+//     - json data of PERSON data
+//     - error string if error occured
 func Get(stub shim.ChaincodeStubInterface, args []string) (string, error) {
 	if len(args) != 1 {
 		return "", errors.New("Invalid parameter")
 	}
-	key, err := person_generateKey(stub, args[0])
+	log.Info("start")
+	key, err := generateKey(stub, args[0])
+	if err != nil {
+		return "", err
+	}
+	log.Debug(key)
 	val, err := stub.GetState(key)
-	fmt.Printf("GetState:%s\n", val)
+	log.Debug(string(val))
 	return string(val), err
 }
 
-/***************************************************
-[AddActivity]
-description : add activity hash of Person to Person object
-parameters  :
-   stub - chaincode interface
-   args - [personid, content hash]
-return:
-   1:response data
-   2:error object if error occured
-***************************************************/
+// AddActivity is a function for append hash of activity information for PERSON
+//   parameters :
+//     stub - object for accessing ledgers from chaincode
+//     args - [personid, content hash]
+//   returns :
+//     - response data
+//     - whether error object or nil
 func AddActivity(stub shim.ChaincodeStubInterface, args []string) (string, error) {
 	data, key, err := get_and_check(stub, args, 2)
 	if err != nil {
 		return "", err
 	}
-	// TODO: check if sender is valid
-	// put data into blockchain
+	log.Debug(key)
+	// check whether data is owned by sender peer
+	valid, err := peer.CompareId(stub, data.Peer)
+	if err != nil {
+		return "", err
+	}
+	if !valid {
+		return "", errors.New("Person is owned by another peer.")
+	}
+	// put data into ledger
 	(*data).Activity = append((*data).Activity, args[1])
 	err = cmn.Put(stub, key, (*data))
-	return "", nil
+	return "", err
 }
 
-/***************************************************
-[AddReputation]
-description : add activity hash of Person to Person object
-parameters  :
-   stub - chaincode interface
-   args - [personid, setter, content hash, type]
-return:
-   1:response data
-   2:error object if error occured
-***************************************************/
+// AddReputation is a function for append hash of reputation information for PERSON
+//   parameters :
+//     stub - object for accessing ledgers from chaincode
+//     args - [personid, content hash]
+//   returns :
+//     - response data
+//     - whether error object or nil
 func AddReputation(stub shim.ChaincodeStubInterface, args []string) (string, error) {
 	data, key, err := get_and_check(stub, args, 4)
 	if err != nil {
 		return "", err
 	}
-	// put data into blockchain
+	log.Debug(key)
+	// check whether data is owned by sender peer
+	valid, err := peer.CompareId(stub, data.Peer)
+	if err != nil {
+		return "", err
+	}
+	if !valid {
+		return "", errors.New("Person is owned by another peer.")
+	}
+	// put data into ledger
 	rep := PersonReputation{
 		Setter:  args[1],
 		Content: args[2],
 		Type:    args[3],
 	}
-	// TODO: check if content hash is valid
 	(*data).Reputation = append((*data).Reputation, rep)
 	err = cmn.Put(stub, key, (*data))
-	return "", nil
+	return "", err
 }
 
 /***************************************************
@@ -229,12 +235,30 @@ return:
    1:response data
    2:error object if error occured
 ***************************************************/
+// RemoveReputation is a function for remove hash of reputation information for PERSON
+//   parameters :
+//     stub - object for accessing ledgers from chaincode
+//     args - [personid, content hash]
+//   returns :
+//     - response data
+//     - whether error object or nil
 func RemoveReputation(stub shim.ChaincodeStubInterface, args []string) (string, error) {
 	data, key, err := get_and_check(stub, args, 3)
 	if err != nil {
 		return "", err
 	}
+	log.Debug(key)
+	// check whether data is owned by sender peer
+	valid, err := peer.CompareId(stub, data.Peer)
+	if err != nil {
+		return "", err
+	}
+	if !valid {
+		return "", errors.New("Person is owned by another peer.")
+	}
+	// put object removed target reputation data into ledger
 	for i, v := range (*data).Reputation {
+		log.Debug(v.Setter + "," + args[1] + "," + v.Content + "," + args[2])
 		if v.Setter == args[1] && v.Content == args[2] {
 			(*data).Reputation = append((*data).Reputation[0:i], (*data).Reputation[i+1:]...)
 			err = cmn.Put(stub, key, (*data))
