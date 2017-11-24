@@ -187,6 +187,6 @@ func Remove(stub shim.ChaincodeStubInterface, args []string) (res string, err er
 		err = errors.New("Peer is not owned by sender")
 		return
 	}
-	err = cmn.Delete(key)
+	err = cmn.Delete(stub, key)
 	return
 }

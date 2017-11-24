@@ -31,20 +31,20 @@ func TestPerson_Init(t *testing.T) {
 func TestPerson_Put(t *testing.T) {
 	scc := new(CC)
 	stub := shim.NewMockStub("soila_test", scc)
-	checkInvoke(t, stub, []string{"person.put", code, testval[0]})
+	checkInvoke(t, stub, []string{"person.register", code, testval[0]})
 }
 
 func TestPerson_Update(t *testing.T) {
 	scc := new(CC)
 	stub := shim.NewMockStub("soila_test", scc)
-	stub.MockInvoke("1", s2b([]string{"person.put", code, testval[0]}))
+	stub.MockInvoke("1", s2b([]string{"person.register", code, testval[0]}))
 	checkInvoke(t, stub, []string{"person.update", code, testval[1]})
 }
 
 func TestPerson_Get(t *testing.T) {
 	scc := new(CC)
 	stub := shim.NewMockStub("soila_test", scc)
-	stub.MockInvoke("1", s2b([]string{"person.put", code, testval[0]}))
+	stub.MockInvoke("1", s2b([]string{"person.register", code, testval[0]}))
 	stub.MockInvoke("1", s2b([]string{"person.update", code, testval[1]}))
 	expect := fmt.Sprintf("{\"Ver\":[\"%s\",\"%s\"],\"Activity\":[],\"Reputation\":[]}",
 		cmn.Sha1(testval[0]), cmn.Sha1(testval[1]))
@@ -54,7 +54,7 @@ func TestPerson_Get(t *testing.T) {
 func TestPerson_AddActivity(t *testing.T) {
 	scc := new(CC)
 	stub := shim.NewMockStub("soila_test", scc)
-	stub.MockInvoke("1", s2b([]string{"person.put", code, testval[0]}))
+	stub.MockInvoke("1", s2b([]string{"person.register", code, testval[0]}))
 	checkInvoke(t, stub, []string{"person.add_activity", code, "a"})
 	checkInvoke(t, stub, []string{"person.add_activity", code, "b"})
 	expect := fmt.Sprintf("{\"Ver\":[\"%s\"],\"Activity\":[\"a\",\"b\"],\"Reputation\":[]}",
@@ -65,7 +65,7 @@ func TestPerson_AddActivity(t *testing.T) {
 func TestPerson_AddReputation(t *testing.T) {
 	scc := new(CC)
 	stub := shim.NewMockStub("soila_test", scc)
-	stub.MockInvoke("1", s2b([]string{"person.put", code, testval[0]}))
+	stub.MockInvoke("1", s2b([]string{"person.register", code, testval[0]}))
 	checkInvoke(t, stub, []string{"person.add_reputation", code, "a", "b", "1"})
 	checkInvoke(t, stub, []string{"person.add_reputation", code, "ccc", "d", "2"})
 	expect := fmt.Sprintf("{\"Ver\":[\"%s\"],\"Activity\":[],\"Reputation\":[{\"Setter\":\"a\",\"Content\":\"b\",\"Type\":\"1\"},{\"Setter\":\"ccc\",\"Content\":\"d\",\"Type\":\"2\"}]}",
@@ -76,7 +76,7 @@ func TestPerson_AddReputation(t *testing.T) {
 func TestPerson_RemoveReputation(t *testing.T) {
 	scc := new(CC)
 	stub := shim.NewMockStub("soila_test", scc)
-	stub.MockInvoke("1", s2b([]string{"person.put", code, testval[0]}))
+	stub.MockInvoke("1", s2b([]string{"person.register", code, testval[0]}))
 	checkInvoke(t, stub, []string{"person.add_reputation", code, "a", "b", "1"})
 	checkInvoke(t, stub, []string{"person.add_reputation", code, "c", "d", "2"})
 	checkInvoke(t, stub, []string{"person.add_reputation", code, "e", "f", "3"})

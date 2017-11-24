@@ -9,8 +9,8 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
+	"github.com/kenmazsyma/soila/chaincode/log"
 )
 
 // Put is a function for put data info ledger
@@ -27,7 +27,7 @@ func Put(stub shim.ChaincodeStubInterface, key string, val interface{}) error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("KEY:%s\n", key)
+	log.Debug(key)
 	err = stub.PutState(key, []byte(jsVal))
 	return err
 }

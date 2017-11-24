@@ -5,10 +5,10 @@ Package main provides chaincode for soila_chain.
 package main
 
 import (
-	"fmt"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	pb "github.com/hyperledger/fabric/protos/peer"
 	"github.com/kenmazsyma/soila/chaincode/log"
+	"github.com/kenmazsyma/soila/chaincode/peer"
 	"github.com/kenmazsyma/soila/chaincode/person"
 )
 
@@ -64,7 +64,7 @@ var invoke_list = map[string]invokeRoutineType{
 func (t *CC) Invoke(stub shim.ChaincodeStubInterface) pb.Response {
 	log.Debug("CC.Invoke")
 	funcname, args := stub.GetFunctionAndParameters()
-	fmt.Printf("NAME:%s\n", funcname)
+	log.Debug(funcname)
 	m := invoke_list[funcname]
 	if m == nil {
 		return shim.Error("Invalid function name.")
