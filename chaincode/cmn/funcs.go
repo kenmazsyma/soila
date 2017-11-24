@@ -1,3 +1,7 @@
+/*
+Package cmn provides common functions for chaincode.
+*/
+
 package cmn
 
 import (
@@ -9,6 +13,12 @@ import (
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 )
 
+// Put is a function for put data info ledger
+//   parameters :
+//     stub - object for accessing ledgers from chaincode
+//     key - key of target data
+//   returns :
+//     - whether error object or nil
 func Put(stub shim.ChaincodeStubInterface, key string, val interface{}) error {
 	if val == nil {
 		return errors.New("invalid param")
@@ -22,6 +32,13 @@ func Put(stub shim.ChaincodeStubInterface, key string, val interface{}) error {
 	return err
 }
 
+// Get is a functioin for get data from ledger
+//   parameters :
+//     stub - object for accessing ledgers from chaincode
+//     key - key of target data
+//   returns :
+//     - target data
+//     - whether error object or nil
 func Get(stub shim.ChaincodeStubInterface, key string) (val interface{}, err error) {
 	var jsVal []byte
 	jsVal, err = stub.GetState(key)
@@ -32,55 +49,45 @@ func Get(stub shim.ChaincodeStubInterface, key string) (val interface{}, err err
 	return
 }
 
+// Delete is a function for delete data from ledger
+//   parameters :
+//     stub - object for accessing ledgers from chaincode
+//     key - key of target data
+//   returns :
+//     - whether error object or nil
+func Delete(stub shim.ChaincodeStubInterface, key string) (err error) {
+	return stub.DelState(key)
+}
+
+// Sha1 is a function for generate sha1 hash of target string
+//   parameters :
+//     stub - object for accessing ledgers from chaincode
+//   returns :
+//     - sha1 hash
 func Sha1(v string) string {
 	h := sha1.New()
 	h.Write([]byte(v))
 	return hex.EncodeToString(h.Sum(nil))
 }
 
+// Sha1Byte is a function for generate sha1 hash of target binary data
+//   parameters :
+//     stub - object for accessing ledgers from chaincode
+//   returns :
+//     - sha1 hash
 func Sha1Byte(v []byte) []byte {
 	h := sha1.New()
 	h.Write(v)
 	return h.Sum(nil)
 }
 
+// ToJSON is a function for generating json string of target object
+//   parameters :
+//     o - target object
+//   returns :
+//     - json string
+//     - whether error object or nil
 func ToJSON(o interface{}) (string, error) {
 	data, err := json.Marshal(o)
 	return string(data), err
 }
-
-//package main
-//
-//import (
-//)
-//
-////updating tradeBlock once it is passed in, creating new TradeBlock if one does not exist
-////adding on the contract value if it does exist
-////input is ledger map and returning an updated tradeblock or ledger
-//func (a *ArgsMap) updateTradeBlock(regCompany bool, tradeCredits string, tradePrice string, tradetimestamp string, tradeCompany string, tradeType string) (map[string]interface {}){
-//    var tradeBlockMap map[string]interface{}
-//    //get the object from ledger if tradeHistory already exists
-//    tbytes, found := getObject(*a, "tradeHistory")
-//    //if found is false, then a tradeHistory does not exists and new struct needs to be created
-//    if found == false {
-//        tradeBlockMap = make(map[string]interface{})
-//        tradeBlockMap["credits"] = []string{tradeCredits}
-//        tradeBlockMap["price"] = []string{tradePrice}
-//        tradeBlockMap["timestamp"] = []string{tradetimestamp}
-//        if regCompany {
-//            tradeBlockMap["company"] = []string{tradeCompany}
-//            tradeBlockMap["buysell"] = []string{tradeType}
-//        }
-//    } else {
-//        tradeBlockMap = tbytes.(map[string]interface{})
-//        //appending all the new attributes
-//        tradeBlockMap["credits"] = append(tradeBlockMap["credits"].([]interface{}), tradeCredits)
-//        tradeBlockMap["price"] = append(tradeBlockMap["price"].([]interface{}), tradePrice)
-//        tradeBlockMap["timestamp"] = append(tradeBlockMap["timestamp"].([]interface{}), tradetimestamp)
-//        if regCompany {
-//            tradeBlockMap["company"] = append(tradeBlockMap["price"].([]interface{}), tradeCompany)
-//            tradeBlockMap["buysell"] = append(tradeBlockMap["buysell"].([]interface{}), tradeType)
-//        }
-//    }
-//    return tradeBlockMap
-//}

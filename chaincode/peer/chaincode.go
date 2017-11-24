@@ -6,6 +6,7 @@ TODO: nessesary to implement logic for verification whether peer can be trusted
 package peer
 
 import (
+	"encoding/json"
 	"errors"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	"github.com/kenmazsyma/soila/chaincode/cmn"
@@ -19,7 +20,7 @@ type Peer struct {
 	ApiAddress  string
 }
 
-var KEY_TYPE = "PEER"
+const KEY_TYPE = "PEER"
 
 // genearteKey is a function for generating key from id of PEER
 //   parameters :
@@ -36,13 +37,17 @@ func generateKey(stub shim.ChaincodeStubInterface) (ret string, err error) {
 	return stub.CreateCompositeKey(KEY_TYPE, []string{string(id)})
 }
 
+func generateKeyFromId(stub shim.ChaincodeStubInterface, id []byte) (ret string, err error) {
+	return stub.CreateCompositeKey(KEY_TYPE, []string{string(id)})
+}
+
 // Register is a function for registering peer informartion
 //   parameters :
 //     stub - object of chaincode information
 //     args - [siteaddress, apiaddress]
 //  return :
-//    1:response data
-//    2:either error object or nil
+//    - response data
+//    - either error object or nil
 func Register(stub shim.ChaincodeStubInterface, args []string) (res string, err error) {
 	if len(args) != 2 {
 		return "", errors.New("Invalid Arguments")
@@ -64,7 +69,7 @@ func Register(stub shim.ChaincodeStubInterface, args []string) (res string, err 
 	}
 	info.Id = id
 	log.Debug(string(id))
-	if _, err = stub.GetState(string(id)); err != nil {
+	if _, err = stub.GetState(key); err != nil {
 		return "", err
 	}
 	log.Info("prev:")
@@ -72,4 +77,116 @@ func Register(stub shim.ChaincodeStubInterface, args []string) (res string, err 
 	info.ApiAddress = args[1]
 	err = cmn.Put(stub, key, info)
 	return "", err
+}
+
+// Get is a function for getting peer information from ledger
+//   parameters :
+//     stub - object of chaincode information
+//     args - [id]
+//  return :
+//    - response data
+//    - either error object or nil
+func Get(stub shim.ChaincodeStubInterface, args []string) (res string, err error) {
+	res = ""
+	if len(args) != 1 {
+		err = errors.New("Invalid Arguments")
+		return
+	}
+	log.Info("start:")
+	key, err := generateKeyFromId(stub, []byte(args[0]))
+	if err != nil {
+		return
+	}
+	log.Debug(key)
+	data, err := stub.GetState(key)
+	if err != nil {
+		return
+	}
+	json, err := json.Marshal(data)
+	res = string(json)
+	return
+}
+
+// Update is a function for updating peer information
+//   parameters :
+//     stub - object of chaincode information
+//     args - [id, siteaddress, apiaddress]
+//  return :
+//    - response data
+//    - either error object or nil
+func Update(stub shim.ChaincodeStubInterface, args []string) (res string, err error) {
+	res = ""
+	if len(args) != 1 {
+		err = errors.New("Invalid Arguments")
+		return
+	}
+	log.Info("start:")
+	key, err := generateKeyFromId(stub, []byte(args[0]))
+	if err != nil {
+		return
+	}
+	log.Debug(key)
+	val, err := stub.GetState(key)
+	if err != nil {
+		return
+	}
+	log.DebugB(val)
+	data := Peer{}
+	err = json.Unmarshal(val, &data)
+	if err != nil {
+		return
+	}
+	log.DebugB(data.Id)
+	valid, err := CompareId(stub, data.Id)
+	if err != nil {
+		return
+	}
+	if !valid {
+		err = errors.New("Peer is not owned by sender")
+		return
+	}
+	res, err = cmn.ToJSON(data)
+	return
+}
+
+// Remove is a function for updating peer information
+//   parameters :
+//     stub - object of chaincode information
+//     args - [id, siteaddress, apiaddress]
+//  return :
+//    - response data
+//    - either error object or nil
+func Remove(stub shim.ChaincodeStubInterface, args []string) (res string, err error) {
+	res = ""
+	if len(args) != 1 {
+		err = errors.New("Invalid Arguments")
+		return
+	}
+	log.Info("start:")
+	key, err := generateKeyFromId(stub, []byte(args[0]))
+	if err != nil {
+		return
+	}
+	log.Debug(key)
+	val, err := stub.GetState(key)
+	if err != nil {
+		return
+	}
+	log.DebugB(val)
+	data := Peer{}
+	err = json.Unmarshal(val, &data)
+	if err != nil {
+		return
+	}
+	log.DebugB(data.Id)
+	valid, err := CompareId(stub, data.Id)
+	if err != nil {
+		return
+	}
+	if !valid {
+		err = errors.New("Peer is not owned by sender")
+		return
+	}
+	err = cmn.Delete(key)
+	return
 }

@@ -74,14 +74,14 @@ func get_and_check(stub shim.ChaincodeStubInterface, args []string, validlen int
 	return
 }
 
-// Put is a function for registering PERSON to ledger
+// Register is a function for registering PERSON to ledger
 //   parameters :
 //     stub - object for accessing ledgers from chaincode
 //     args - [personid, data]
 //   return :
 //     - response data
 //     - error object if error occured
-func Put(stub shim.ChaincodeStubInterface, args []string) (string, error) {
+func Register(stub shim.ChaincodeStubInterface, args []string) (string, error) {
 	if len(args) != 2 {
 		return "", errors.New("Invalid Arguments")
 	}

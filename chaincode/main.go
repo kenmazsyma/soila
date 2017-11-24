@@ -44,12 +44,16 @@ func (t *CC) Init(stub shim.ChaincodeStubInterface) pb.Response {
 type invokeRoutineType func(shim.ChaincodeStubInterface, []string) (string, error)
 
 var invoke_list = map[string]invokeRoutineType{
-	"person.put":               person.Put,
+	"person.register":          person.Register,
 	"person.update":            person.Update,
 	"person.get":               person.Get,
 	"person.add_activity":      person.AddActivity,
 	"person.add_reputation":    person.AddReputation,
 	"person.remove_reputation": person.RemoveReputation,
+	"peer.register":            peer.Register,
+	"peer.update":              peer.Update,
+	"peer.get":                 peer.Get,
+	"peer.remove":              peer.Remove,
 }
 
 // Invoke is a function for executing chaincode for soila_chain
