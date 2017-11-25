@@ -59,6 +59,39 @@ func Delete(stub shim.ChaincodeStubInterface, key string) (err error) {
 	return stub.DelState(key)
 }
 
+type FuncGenKey func(shim.ChaincodeStubInterface, []string) (string, error)
+
+// VerifyForRegistration is a function for verifying if parameters is valid.
+//   parameters :
+//     stub - object for accessing ledgers from chaincode
+//     genkey - function for generating key
+//     args - target parameters for verify
+//     nofElm - expected length of args
+//   returns :
+//     key - generated key
+//     err - whether error object or nil
+func VerifyForRegistration(stub shim.ChaincodeStubInterface, genkey FuncGenKey, args []string, nofElm int) (key string, err error) {
+	key = ""
+	if len(args) != nofElm {
+		err = errors.New("Invalid Arguments")
+		return
+	}
+	key, err = genkey(stub, args)
+	if err != nil {
+		return
+	}
+	// check if data is already exists.
+	val, err := stub.GetState(key)
+	if err != nil {
+		return
+	}
+	if val != nil {
+		err = errors.New("data is already exists.")
+		return
+	}
+	return
+}
+
 // Sha1 is a function for generate sha1 hash of target string
 //   parameters :
 //     stub - object for accessing ledgers from chaincode

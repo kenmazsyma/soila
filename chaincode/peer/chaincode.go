@@ -25,16 +25,15 @@ const KEY_TYPE = "PEER"
 // genearteKey is a function for generating key from id of PEER
 //   parameters :
 //     stub - object for accessing ledgers from chaincode
-//     id - id of PERSON
+//     args - arguments which contains keys
 //   return :
 //     - key
 //     - whether error object or nil
-func generateKey(stub shim.ChaincodeStubInterface) (ret string, err error) {
-	id := []byte{}
-	if id, err = stub.GetCreator(); err != nil {
-		return "", err
-	}
-	return stub.CreateCompositeKey(KEY_TYPE, []string{string(id)})
+func generateKey(stub shim.ChaincodeStubInterface, args []string) (ret string, err error) {
+	//if id, err = stub.GetCreator(); err != nil {
+	//	return "", err
+	//}
+	return stub.CreateCompositeKey(KEY_TYPE, []string{args[0]})
 }
 
 func generateKeyFromId(stub shim.ChaincodeStubInterface, id []byte) (ret string, err error) {
@@ -49,20 +48,18 @@ func generateKeyFromId(stub shim.ChaincodeStubInterface, id []byte) (ret string,
 //    - response data
 //    - either error object or nil
 func Register(stub shim.ChaincodeStubInterface, args []string) (res string, err error) {
-	if len(args) != 2 {
-		return "", errors.New("Invalid Arguments")
-	}
 	log.Info("start:")
-	key, err := generateKey(stub)
-	if err != nil {
-		return "", err
-	}
 	info := Peer{}
 	// check if data is already exists
 	if info.Hash, err = stub.GetCreator(); err != nil {
 		return "", err
 	}
 	log.Debug(string(info.Hash))
+	key, err := cmn.VerifyForRegistration(stub, generateKey, []string{string(info.Hash)}, 1)
+	if err != nil {
+		return "", err
+	}
+	log.Debug(key)
 	id, err := GetId(stub)
 	if err != nil {
 		return "", err

@@ -1,5 +1,5 @@
 /*
-Package person provides chaincode for managing person data.
+Package person provides chaincode for managing PERSON data.
 */
 
 package person
@@ -32,12 +32,12 @@ const KEY_TYPE = "PERSON"
 // genearteKey is a function for generating key from id of PERSON
 //   parameters :
 //     stub - object for accessing ledgers from chaincode
-//     id - id of PERSON
+//     args - arguments which contains keys
 //   return :
 //     - key
 //     - whether error object or nil
-func generateKey(stub shim.ChaincodeStubInterface, id string) (string, error) {
-	return stub.CreateCompositeKey(KEY_TYPE, []string{id})
+func generateKey(stub shim.ChaincodeStubInterface, args []string) (string, error) {
+	return stub.CreateCompositeKey(KEY_TYPE, []string{args[0]})
 }
 
 // get_and_check is a function for getting data of PERSON
@@ -55,7 +55,7 @@ func get_and_check(stub shim.ChaincodeStubInterface, args []string, validlen int
 		return
 	}
 	// get ID from blockchain
-	key, err = generateKey(stub, args[0])
+	key, err = generateKey(stub, args)
 	if err != nil {
 		return
 	}
@@ -82,24 +82,11 @@ func get_and_check(stub shim.ChaincodeStubInterface, args []string, validlen int
 //     - response data
 //     - error object if error occured
 func Register(stub shim.ChaincodeStubInterface, args []string) (string, error) {
-	if len(args) != 2 {
-		return "", errors.New("Invalid Arguments")
-	}
 	log.Info("start:")
-	key, err := generateKey(stub, args[0])
+	key, err := cmn.VerifyForRegistration(stub, generateKey, args, 2)
 	if err != nil {
 		return "", err
 	}
-	log.Debug("KEY:" + key)
-	// check if data is already exists.
-	val, err := stub.GetState(key)
-	if err != nil {
-		return "", err
-	}
-	if val != nil {
-		return "", errors.New("data is already exists.")
-	}
-	log.Debug(string(val))
 	peerid, err := peer.GetId(stub)
 	if err != nil {
 		return "", err
@@ -156,7 +143,7 @@ func Get(stub shim.ChaincodeStubInterface, args []string) (string, error) {
 		return "", errors.New("Invalid parameter")
 	}
 	log.Info("start")
-	key, err := generateKey(stub, args[0])
+	key, err := generateKey(stub, args)
 	if err != nil {
 		return "", err
 	}
