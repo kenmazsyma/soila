@@ -32,23 +32,6 @@ func Put(stub shim.ChaincodeStubInterface, key string, val interface{}) error {
 	return err
 }
 
-// Get is a functioin for get data from ledger
-//   parameters :
-//     stub - object for accessing ledgers from chaincode
-//     key - key of target data
-//   returns :
-//     - target data
-//     - whether error object or nil
-func Get(stub shim.ChaincodeStubInterface, key string) (val interface{}, err error) {
-	var jsVal []byte
-	jsVal, err = stub.GetState(key)
-	if err != nil {
-		return nil, err
-	}
-	err = json.Unmarshal(jsVal, &val)
-	return
-}
-
 // Delete is a function for delete data from ledger
 //   parameters :
 //     stub - object for accessing ledgers from chaincode
@@ -89,6 +72,26 @@ func VerifyForRegistration(stub shim.ChaincodeStubInterface, genkey FuncGenKey, 
 		err = errors.New("data is already exists.")
 		return
 	}
+	return
+}
+
+func Get(stub shim.ChaincodeStubInterface, args []string, nofElm int) (res string, err error) {
+	res = ""
+	if len(args) != nofElm {
+		err = errors.New("Invalid Arguments")
+		return
+	}
+	key, err := generateKey(stub, args)
+	if err != nil {
+		return
+	}
+	log.Debug(key)
+	data, err := stub.GetState(key)
+	if err != nil {
+		return
+	}
+	json, err := json.Marshal(data)
+	res = string(json)
 	return
 }
 

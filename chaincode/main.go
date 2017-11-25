@@ -10,6 +10,7 @@ import (
 	"github.com/kenmazsyma/soila/chaincode/log"
 	"github.com/kenmazsyma/soila/chaincode/peer"
 	"github.com/kenmazsyma/soila/chaincode/person"
+	"github.com/kenmazsyma/soila/chaincode/project"
 )
 
 // ================================================
@@ -54,6 +55,9 @@ var invoke_list = map[string]invokeRoutineType{
 	"peer.update":              peer.Update,
 	"peer.get":                 peer.Get,
 	"peer.remove":              peer.Remove,
+	"project.register":         project.Register,
+	"project.get":              project.Get,
+	"project.updatestatus":     project.UpdateStatus,
 }
 
 // Invoke is a function for executing chaincode for soila_chain

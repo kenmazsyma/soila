@@ -139,18 +139,7 @@ func Update(stub shim.ChaincodeStubInterface, args []string) (string, error) {
 //     - json data of PERSON data
 //     - error string if error occured
 func Get(stub shim.ChaincodeStubInterface, args []string) (string, error) {
-	if len(args) != 1 {
-		return "", errors.New("Invalid parameter")
-	}
-	log.Info("start")
-	key, err := generateKey(stub, args)
-	if err != nil {
-		return "", err
-	}
-	log.Debug(key)
-	val, err := stub.GetState(key)
-	log.Debug(string(val))
-	return string(val), err
+	return cmn.Get(shim, args, 1)
 }
 
 // AddActivity is a function for append hash of activity information for PERSON

@@ -1,5 +1,5 @@
 /*
-Package peer provides chaincode for managing peer data.
+Package peer provides chaincode for managing PEER data.
 TODO: nessesary to implement logic for verification whether peer can be trusted
 */
 
@@ -40,7 +40,7 @@ func generateKeyFromId(stub shim.ChaincodeStubInterface, id []byte) (ret string,
 	return stub.CreateCompositeKey(KEY_TYPE, []string{string(id)})
 }
 
-// Register is a function for registering peer informartion
+// Register is a function for registering PEER informartion
 //   parameters :
 //     stub - object of chaincode information
 //     args - [siteaddress, apiaddress]
@@ -76,7 +76,7 @@ func Register(stub shim.ChaincodeStubInterface, args []string) (res string, err 
 	return "", err
 }
 
-// Get is a function for getting peer information from ledger
+// Get is a function for getting PEER information from ledger
 //   parameters :
 //     stub - object of chaincode information
 //     args - [id]
@@ -84,27 +84,10 @@ func Register(stub shim.ChaincodeStubInterface, args []string) (res string, err 
 //    - response data
 //    - either error object or nil
 func Get(stub shim.ChaincodeStubInterface, args []string) (res string, err error) {
-	res = ""
-	if len(args) != 1 {
-		err = errors.New("Invalid Arguments")
-		return
-	}
-	log.Info("start:")
-	key, err := generateKeyFromId(stub, []byte(args[0]))
-	if err != nil {
-		return
-	}
-	log.Debug(key)
-	data, err := stub.GetState(key)
-	if err != nil {
-		return
-	}
-	json, err := json.Marshal(data)
-	res = string(json)
-	return
+	return cmn.Get(stub, args, 1)
 }
 
-// Update is a function for updating peer information
+// Update is a function for updating PEER information
 //   parameters :
 //     stub - object of chaincode information
 //     args - [id, siteaddress, apiaddress]
@@ -146,7 +129,7 @@ func Update(stub shim.ChaincodeStubInterface, args []string) (res string, err er
 	return
 }
 
-// Remove is a function for updating peer information
+// Remove is a function for updating PEER information
 //   parameters :
 //     stub - object of chaincode information
 //     args - [id, siteaddress, apiaddress]
