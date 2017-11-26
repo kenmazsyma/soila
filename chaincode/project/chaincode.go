@@ -5,6 +5,8 @@ Package project provdes chaincode for managing PROJECT data.
 package project
 
 import (
+	"encoding/json"
+	"errors"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	"github.com/kenmazsyma/soila/chaincode/cmn"
 	"github.com/kenmazsyma/soila/chaincode/log"
@@ -40,6 +42,26 @@ func generateKey(stub shim.ChaincodeStubInterface, args []string) (string, error
 		return "", err
 	}
 	return stub.CreateCompositeKey(KEY_TYPE, []string{string(peerid), args[0]})
+}
+
+// get_and_check is a function for getting data of PERSON
+//   parameters :
+//     stub - object for accessing ledgers from chaincode
+//     args - parameters received from client
+//     nofElm - valid length of args
+//   return :
+//     - PERSON object
+//     - key
+//     - whether error object or nil
+func get_and_check(stub shim.ChaincodeStubInterface, args []string, nofElm int) (rec *Project, key string, err error) {
+	rec = nil
+	js, key, err := cmn.VerifyForUpdate(stub, generateKey, args, nofElm)
+	if err != nil {
+		return
+	}
+	*rec = Project{}
+	err = json.Unmarshal(js, rec)
+	return
 }
 
 // Register is a function for registering PROJECT to ledger
@@ -79,7 +101,7 @@ func Register(stub shim.ChaincodeStubInterface, args []string) (string, error) {
 //    - response data
 //    - either error object or nil
 func Get(stub shim.ChaincodeStubInterface, args []string) (res string, err error) {
-	return cmn.Get(stub, args, 1)
+	return cmn.Get(stub, generateKey, args, 1)
 }
 
 // UpdateStatus is a function for updating PROJECT staus
@@ -94,6 +116,15 @@ func UpdateStatus(stub shim.ChaincodeStubInterface, args []string) (string, erro
 	if err != nil {
 		return "", err
 	}
+	val, err := strconv.ParseInt(args[2], 10, 64)
+	if err != nil {
+		log.Info("status parameter is not correct.")
+		return "", err
+	}
+	if int64(data.Status) == val {
+		log.Info("status parameter is not different from ledger.")
+		return "", nil
+	}
 	log.Debug(key)
 	valid, err := peer.CompareId(stub, data.Peer)
 	if err != nil {
@@ -102,11 +133,6 @@ func UpdateStatus(stub shim.ChaincodeStubInterface, args []string) (string, erro
 	// peer id is different from sender id
 	if !valid {
 		return "", errors.New("Project is not found in ledger.")
-	}
-	val, err := strconv.ParseInt(args[2])
-	if valid.Status == val {
-		log.Info("status parameter is not different from ledger.")
-		return "", nil
 	}
 	return "", err
 }

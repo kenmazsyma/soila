@@ -44,33 +44,19 @@ func generateKey(stub shim.ChaincodeStubInterface, args []string) (string, error
 //   parameters :
 //     stub - object for accessing ledgers from chaincode
 //     args - parameters received from client
-//     validlen - valid length of args
+//     nofElm - valid length of args
 //   return :
 //     - PERSON object
 //     - key
 //     - whether error object or nil
-func get_and_check(stub shim.ChaincodeStubInterface, args []string, validlen int) (rec *Person, key string, err error) {
-	if len(args) != validlen {
-		err = errors.New("Invalid Arguments")
-		return
-	}
-	// get ID from blockchain
-	key, err = generateKey(stub, args)
+func get_and_check(stub shim.ChaincodeStubInterface, args []string, nofElm int) (rec *Person, key string, err error) {
+	rec = nil
+	js, key, err := cmn.VerifyForUpdate(stub, generateKey, args, nofElm)
 	if err != nil {
 		return
 	}
-	// check if data is already exists.
-	val, err := stub.GetState(key)
-	if err != nil {
-		return
-	}
-	if val == nil {
-		err = errors.New("data is not exists.")
-		return
-	}
-	data := Person{}
-	err = json.Unmarshal(val, &data)
-	rec = &data
+	*rec = Person{}
+	err = json.Unmarshal(js, rec)
 	return
 }
 
@@ -139,7 +125,7 @@ func Update(stub shim.ChaincodeStubInterface, args []string) (string, error) {
 //     - json data of PERSON data
 //     - error string if error occured
 func Get(stub shim.ChaincodeStubInterface, args []string) (string, error) {
-	return cmn.Get(shim, args, 1)
+	return cmn.Get(stub, generateKey, args, 1)
 }
 
 // AddActivity is a function for append hash of activity information for PERSON

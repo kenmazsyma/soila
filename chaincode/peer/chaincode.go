@@ -14,10 +14,9 @@ import (
 )
 
 type Peer struct {
-	Hash        []byte
-	Id          []byte
-	SiteAddress string
-	ApiAddress  string
+	Hash    []byte // hash of peer id[key]
+	Id      []byte // peer id
+	Address string // url of wenapp / webapi
 }
 
 const KEY_TYPE = "PEER"
@@ -43,16 +42,21 @@ func generateKeyFromId(stub shim.ChaincodeStubInterface, id []byte) (ret string,
 // Register is a function for registering PEER informartion
 //   parameters :
 //     stub - object of chaincode information
-//     args - [siteaddress, apiaddress]
+//     args - [address]
 //  return :
 //    - response data
 //    - either error object or nil
 func Register(stub shim.ChaincodeStubInterface, args []string) (res string, err error) {
 	log.Info("start:")
 	info := Peer{}
+	res = ""
 	// check if data is already exists
 	if info.Hash, err = stub.GetCreator(); err != nil {
 		return "", err
+	}
+	if len(args) != 1 {
+		err = errors.New("Invalid Arguments")
+		return
 	}
 	log.Debug(string(info.Hash))
 	key, err := cmn.VerifyForRegistration(stub, generateKey, []string{string(info.Hash)}, 1)
@@ -70,8 +74,7 @@ func Register(stub shim.ChaincodeStubInterface, args []string) (res string, err 
 		return "", err
 	}
 	log.Info("prev:")
-	info.SiteAddress = args[0]
-	info.ApiAddress = args[1]
+	info.Address = args[0]
 	err = cmn.Put(stub, key, info)
 	return "", err
 }
@@ -84,13 +87,13 @@ func Register(stub shim.ChaincodeStubInterface, args []string) (res string, err 
 //    - response data
 //    - either error object or nil
 func Get(stub shim.ChaincodeStubInterface, args []string) (res string, err error) {
-	return cmn.Get(stub, args, 1)
+	return cmn.Get(stub, generateKey, args, 1)
 }
 
 // Update is a function for updating PEER information
 //   parameters :
 //     stub - object of chaincode information
-//     args - [id, siteaddress, apiaddress]
+//     args - [id, address]
 //  return :
 //    - response data
 //    - either error object or nil
@@ -125,7 +128,9 @@ func Update(stub shim.ChaincodeStubInterface, args []string) (res string, err er
 		err = errors.New("Peer is not owned by sender")
 		return
 	}
-	res, err = cmn.ToJSON(data)
+	data.Address = args[1]
+	js, err := cmn.ToJSON(data)
+	err = stub.PutState(key, []byte(js))
 	return
 }
 

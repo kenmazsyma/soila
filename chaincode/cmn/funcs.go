@@ -44,7 +44,7 @@ func Delete(stub shim.ChaincodeStubInterface, key string) (err error) {
 
 type FuncGenKey func(shim.ChaincodeStubInterface, []string) (string, error)
 
-// VerifyForRegistration is a function for verifying if parameters is valid.
+// VerifyForRegistration is a function for verifying if parameters is valid before registering.
 //   parameters :
 //     stub - object for accessing ledgers from chaincode
 //     genkey - function for generating key
@@ -75,13 +75,54 @@ func VerifyForRegistration(stub shim.ChaincodeStubInterface, genkey FuncGenKey, 
 	return
 }
 
-func Get(stub shim.ChaincodeStubInterface, args []string, nofElm int) (res string, err error) {
+// VerifyForUpdate is a function for verifying if parameters is valid before updating.
+//   parameters :
+//     stub - object for accessing ledgers from chaincode
+//     genkey - function for generating key
+//     args - target parameters for verify
+//     nofElm - expected length of args
+//   returns :
+//     ret - data got from ledger
+//     key - generated key
+//     err - whether error object or nil
+func VerifyForUpdate(stub shim.ChaincodeStubInterface, genkey FuncGenKey, args []string, nofElm int) (ret []byte, key string, err error) {
+	if len(args) != nofElm {
+		err = errors.New("Invalid Arguments")
+		return
+	}
+	// get ID from ledger
+	key, err = genkey(stub, args)
+	if err != nil {
+		return
+	}
+	// check if data is already exists.
+	ret, err = stub.GetState(key)
+	if err != nil {
+		return
+	}
+	if ret == nil {
+		err = errors.New("data is not exists.")
+		return
+	}
+	return
+}
+
+// Get is a function for getting data from ledger
+//   parameters :
+//     stub - object for accessing ledgers from chaincode
+//     genkey - function for generating key
+//     args - target parameters for verify
+//     nofElm - expected length of args
+//   returns :
+//     res - data got from ledger
+//     err - whether error obejct or nil
+func Get(stub shim.ChaincodeStubInterface, genkey FuncGenKey, args []string, nofElm int) (res string, err error) {
 	res = ""
 	if len(args) != nofElm {
 		err = errors.New("Invalid Arguments")
 		return
 	}
-	key, err := generateKey(stub, args)
+	key, err := genkey(stub, args)
 	if err != nil {
 		return
 	}
