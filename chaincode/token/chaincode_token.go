@@ -16,21 +16,13 @@ import (
 type Token struct {
 	CreatorPeerID    []byte // peer id of creator project[key]
 	CreatorProjectID string // id of creator project[key]
-	Name             string // name of token
-	DescHash         string // hash of description of token
+
+	Name     string // name of token
+	DescHash string // hash of description of token
 	// rule // TODO:
 }
 
-type TokenTransaction struct {
-	TokenID string // token id[key]
-	Time    string // generated time
-	From    string // sender
-	To      string // person in receipt
-	Count   int    // number of sending
-}
-
 const KEY_TOKEN = "TOKEN"
-const KEY_TOKENTRANS = "TOKENTRANS"
 
 // generateKey is a function for generating key from id of PROJECT
 //   parameters :
@@ -41,22 +33,6 @@ const KEY_TOKENTRANS = "TOKENTRANS"
 //     - whether error object or nil
 func generateKey(stub shim.ChaincodeStubInterface, args []string) (string, error) {
 	return stub.CreateCompositeKey(KEY_TOKEN, args[0:2])
-}
-
-// generateKeyForTrans is a function for generating key from id of PROJECT
-//   parameters :
-//     stub - object for accessing ledgers from chaincode
-//     args - arguments which contains key
-//   return :
-//     - key
-//     - whether error object or nil
-func generateKeyForTrans(stub shim.ChaincodeStubInterface, args []string) (string, error) {
-	peerid, err := peer.GetId(stub)
-	if err != nil {
-		return "", err
-	}
-	id := cmn.Sha1(string(peerid) + args[1])
-	return stub.CreateCompositeKey(KEY_TOKENTRANS, []string{args[0], id})
 }
 
 // get_and_check is a function for getting data of PERSON
@@ -121,29 +97,64 @@ func Get(stub shim.ChaincodeStubInterface, args []string) (res string, err error
 	return cmn.Get(stub, generateKey, args, 2)
 }
 
-// Update is a function for updating TOKEN staus
+// Update is a function for updating TOKEN information
 //   parameters :
 //     stub - object for accessing ledgers from chaincode
-//     args - [peerid, projectid, name, description]
+//     args - [projectid, name, description]
 //   return :
 //     - response data
 //     - error object if error occured
 func Update(stub shim.ChaincodeStubInterface, args []string) (string, error) {
-	data, key, err := get_and_check(stub, args, 4)
+	if len(args) != 3 {
+		return "", errors.New("invalid param")
+	}
+	peerid, err := peer.GetId(stub)
+	if err != nil {
+		return "", err
+	}
+	data, key, err := get_and_check(stub, []string{string(peerid), args[0]}, 2)
 	if err != nil {
 		return "", err
 	}
 	log.Debug(key)
-	valid, err := peer.CompareId(stub, data.CreatorPeerID)
+	// peer id is different from sender id
+	if data == nil {
+		return "", errors.New("Data is not found in ledger.")
+	}
+	//TODO:Token information can be updated only in the case that token is not issued yet
+	data.Name = args[1]
+	data.DescHash = cmn.Sha1(args[2])
+	err = cmn.Put(stub, key, data)
+	return "", err
+}
+
+// Remove is a function for updating PEER information
+//   parameters :
+//     stub - object of chaincode information
+//     args - [projectid]
+//  return :
+//    - response data
+//    - either error object or nil
+func Remove(stub shim.ChaincodeStubInterface, args []string) (res string, err error) {
+	//TODO:Token information can be updated only in the case that token is not issued yet
+	res = ""
+	if len(args) != 1 {
+		err = errors.New("Invalid Arguments")
+		return
+	}
+	peerid, err := peer.GetId(stub)
 	if err != nil {
 		return "", err
 	}
-	// peer id is different from sender id
-	if !valid {
-		return "", errors.New("Project is not found in ledger.")
+	val, key, err := get_and_check(stub, []string{string(peerid), args[0]}, 2)
+	if err != nil {
+		return "", err
 	}
-	data.Name = args[2]
-	data.DescHash = cmn.Sha1(args[3])
-	err = cmn.Put(stub, key, data)
+	log.Debug(key)
+	// peer id is different from sender id
+	if val == nil {
+		return "", errors.New("Data is not found in ledger.")
+	}
+	err = cmn.Delete(stub, key)
 	return "", err
 }

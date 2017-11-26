@@ -42,7 +42,7 @@ func (t *CC) Init(stub shim.ChaincodeStubInterface) pb.Response {
 //  Invoke
 // ================================================
 
-type invokeRoutineType func(shim.ChaincodeStubInterface, []string) (string, error)
+type invokeRoutineType func(shim.ChaincodeStubInterface, []string) (string, string, error)
 
 var invoke_list = map[string]invokeRoutineType{
 	"person.register":          person.Register,
@@ -54,7 +54,7 @@ var invoke_list = map[string]invokeRoutineType{
 	"peer.register":            peer.Register,
 	"peer.update":              peer.Update,
 	"peer.get":                 peer.Get,
-	"peer.remove":              peer.Remove,
+	"peer.deregister":          peer.Deregister,
 	"project.register":         project.Register,
 	"project.get":              project.Get,
 	"project.updatestatus":     project.UpdateStatus,
@@ -73,11 +73,11 @@ func (t *CC) Invoke(stub shim.ChaincodeStubInterface) pb.Response {
 	if m == nil {
 		return shim.Error("Invalid function name.")
 	}
-	ret, err := m(stub, args)
+	ret1, ret2, err := m(stub, args)
 	if err != nil {
 		return shim.Error(err.Error())
 	}
-	return shim.Success([]byte(ret))
+	return shim.Success([]byte("['" + ret1 + "'," + ret2 + "]"))
 }
 
 // ================================================

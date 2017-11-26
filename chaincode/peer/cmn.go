@@ -12,29 +12,44 @@ import (
 	"github.com/kenmazsyma/soila/chaincode/log"
 )
 
-// GetId is a function for getting ID of creator peer
+// GetHash is a function for getting hash of sender's signature
 //   parameters :
 //     stub - object for accessing ledgers from chaincode
 //   returns :
-//     - ID fo creator peer
+//     - hash of sender's signature
 //     - whether error object or nil
-func GetId(stub shim.ChaincodeStubInterface) ([]byte, error) {
+func GetHash(stub shim.ChaincodeStubInterface) ([]byte, error) {
 	creator, err := stub.GetCreator()
 	if err != nil {
 		return nil, err
 	}
-	return cmn.Sha1Byte(creator), nil
+	return cmn.Sha1B(creator), nil
 }
 
-// CompareId is a function for comparing with ID of sender peer
+// GetKey is a function for getting key of sender's PEER data
 //   parameters :
 //     stub - object for accessing ledgers from chaincode
-//     target - data for target
+//   returns :
+//     - hash of sender's signature
+//     - whether error object or nil
+func GetKey(stub shim.ChaincodeStubInterface) (ret string, err error) {
+	hash, err := GetHash(stub)
+	if err != nil {
+		return
+	}
+	ret, err = generateKey(stub, []string{string(hash)})
+	return
+}
+
+// CompareHash is a function for comparing with hash of sender peer
+//   parameters :
+//     stub - object for accessing ledgers from chaincode
+//     target - target hash
 //   returns :
 //     - true if matched
 //     - whether error object or nil
-func CompareId(stub shim.ChaincodeStubInterface, target []byte) (bool, error) {
-	mypeer, err := GetId(stub)
+func CompareHash(stub shim.ChaincodeStubInterface, target []byte) (bool, error) {
+	mypeer, err := GetHash(stub)
 	if err != nil {
 		return false, err
 	}

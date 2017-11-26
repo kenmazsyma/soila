@@ -14,8 +14,7 @@ import (
 )
 
 type Peer struct {
-	Hash    []byte // hash of peer id[key]
-	Id      []byte // peer id
+	Hash    []byte // hash of peer's signature[key]
 	Address string // url of wenapp / webapi
 }
 
@@ -29,98 +28,87 @@ const KEY_TYPE = "PEER"
 //     - key
 //     - whether error object or nil
 func generateKey(stub shim.ChaincodeStubInterface, args []string) (ret string, err error) {
-	//if id, err = stub.GetCreator(); err != nil {
-	//	return "", err
-	//}
 	return stub.CreateCompositeKey(KEY_TYPE, []string{args[0]})
-}
-
-func generateKeyFromId(stub shim.ChaincodeStubInterface, id []byte) (ret string, err error) {
-	return stub.CreateCompositeKey(KEY_TYPE, []string{string(id)})
 }
 
 // Register is a function for registering PEER informartion
 //   parameters :
 //     stub - object of chaincode information
 //     args - [address]
-//  return :
-//    - response data
-//    - either error object or nil
-func Register(stub shim.ChaincodeStubInterface, args []string) (res string, err error) {
+//   return :
+//     key - key value
+//     res - response data
+//     err - either error object or nil
+func Register(stub shim.ChaincodeStubInterface, args []string) (key, res string, err error) {
+	// get peer's signature
 	log.Info("start:")
 	info := Peer{}
-	res = ""
-	// check if data is already exists
-	if info.Hash, err = stub.GetCreator(); err != nil {
-		return "", err
-	}
-	if len(args) != 1 {
-		err = errors.New("Invalid Arguments")
+	sig, err := stub.GetCreator()
+	if err != nil {
 		return
 	}
-	log.Debug(string(info.Hash))
-	key, err := cmn.VerifyForRegistration(stub, generateKey, []string{string(info.Hash)}, 1)
+	// check parameter
+	if err = cmn.CheckParam(args, 1); err != nil {
+		return
+	}
+	// verify if peer is already registered
+	info.Hash = cmn.Sha1B(sig)
+	log.DebugB(info.Hash)
+	key, err = cmn.VerifyForRegistration(stub, generateKey, []string{string(info.Hash)})
 	if err != nil {
-		return "", err
+		return
 	}
-	log.Debug(key)
-	id, err := GetId(stub)
-	if err != nil {
-		return "", err
-	}
-	info.Id = id
-	log.Debug(string(id))
-	if _, err = stub.GetState(key); err != nil {
-		return "", err
-	}
-	log.Info("prev:")
+	// register peer
+	log.Info("Register:" + key)
 	info.Address = args[0]
 	err = cmn.Put(stub, key, info)
-	return "", err
+	return
 }
 
 // Get is a function for getting PEER information from ledger
 //   parameters :
 //     stub - object of chaincode information
-//     args - [id]
-//  return :
-//    - response data
-//    - either error object or nil
-func Get(stub shim.ChaincodeStubInterface, args []string) (res string, err error) {
+//     args - [key]
+//   return :
+//     key - key value
+//     res - response data
+//     err - either error object or nil
+func Get(stub shim.ChaincodeStubInterface, args []string) (key, res string, err error) {
 	return cmn.Get(stub, generateKey, args, 1)
 }
 
 // Update is a function for updating PEER information
 //   parameters :
 //     stub - object of chaincode information
-//     args - [id, address]
-//  return :
-//    - response data
-//    - either error object or nil
-func Update(stub shim.ChaincodeStubInterface, args []string) (res string, err error) {
-	res = ""
-	if len(args) != 1 {
-		err = errors.New("Invalid Arguments")
+//     args - [key, address]
+//   return :
+//     key - key value
+//     res - response data
+//     err - either error object or nil
+func Update(stub shim.ChaincodeStubInterface, args []string) (key, res string, err error) {
+	// check parameter
+	if err = cmn.CheckParam(args, 1); err != nil {
 		return
 	}
+	// check if data is exist
 	log.Info("start:")
-	key, err := generateKeyFromId(stub, []byte(args[0]))
-	if err != nil {
-		return
-	}
-	log.Debug(key)
+	key = args[0]
 	val, err := stub.GetState(key)
 	if err != nil {
 		return
 	}
+	if val == nil {
+		return
+	}
+	// check if data is owned by sender
 	log.DebugB(val)
 	data := Peer{}
 	err = json.Unmarshal(val, &data)
 	if err != nil {
 		return
 	}
-	log.DebugB(data.Id)
-	valid, err := CompareId(stub, data.Id)
+	log.DebugB(data.Hash)
+	valid, err := CompareHash(stub, data.Hash)
 	if err != nil {
 		return
 	}
@@ -128,31 +116,31 @@ func Update(stub shim.ChaincodeStubInterface, args []string) (res string, err er
 		err = errors.New("Peer is not owned by sender")
 		return
 	}
+	if data.Address == args[1] {
+		return
+	}
+	// update data
 	data.Address = args[1]
-	js, err := cmn.ToJSON(data)
-	err = stub.PutState(key, []byte(js))
+	err = cmn.Put(stub, key, data)
 	return
 }
 
-// Remove is a function for updating PEER information
+// Deregister is a function for removing PEER information
+// TODO:consider the condition for allowing peer to deregister
 //   parameters :
 //     stub - object of chaincode information
-//     args - [id, siteaddress, apiaddress]
-//  return :
-//    - response data
-//    - either error object or nil
-func Remove(stub shim.ChaincodeStubInterface, args []string) (res string, err error) {
-	res = ""
-	if len(args) != 1 {
-		err = errors.New("Invalid Arguments")
+//     args - [key]
+//   return :
+//     key - key value
+//     res - response data
+//     err - either error object or nil
+func Deregister(stub shim.ChaincodeStubInterface, args []string) (key, res string, err error) {
+	// check parameter
+	if err = cmn.CheckParam(args, 1); err != nil {
 		return
 	}
-	log.Info("start:")
-	key, err := generateKeyFromId(stub, []byte(args[0]))
-	if err != nil {
-		return
-	}
-	log.Debug(key)
+	// check if data is exist
+	key = args[0]
 	val, err := stub.GetState(key)
 	if err != nil {
 		return
@@ -163,8 +151,9 @@ func Remove(stub shim.ChaincodeStubInterface, args []string) (res string, err er
 	if err != nil {
 		return
 	}
-	log.DebugB(data.Id)
-	valid, err := CompareId(stub, data.Id)
+	log.DebugB(data.Hash)
+	// verify if data is owned by sender
+	valid, err := CompareHash(stub, data.Hash)
 	if err != nil {
 		return
 	}
@@ -172,6 +161,7 @@ func Remove(stub shim.ChaincodeStubInterface, args []string) (res string, err er
 		err = errors.New("Peer is not owned by sender")
 		return
 	}
+	// delete data
 	err = cmn.Delete(stub, key)
 	return
 }

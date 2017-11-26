@@ -53,12 +53,7 @@ type FuncGenKey func(shim.ChaincodeStubInterface, []string) (string, error)
 //   returns :
 //     key - generated key
 //     err - whether error object or nil
-func VerifyForRegistration(stub shim.ChaincodeStubInterface, genkey FuncGenKey, args []string, nofElm int) (key string, err error) {
-	key = ""
-	if len(args) != nofElm {
-		err = errors.New("Invalid Arguments")
-		return
-	}
+func VerifyForRegistration(stub shim.ChaincodeStubInterface, genkey FuncGenKey, args []string) (key string, err error) {
 	key, err = genkey(stub, args)
 	if err != nil {
 		return
@@ -116,13 +111,12 @@ func VerifyForUpdate(stub shim.ChaincodeStubInterface, genkey FuncGenKey, args [
 //   returns :
 //     res - data got from ledger
 //     err - whether error obejct or nil
-func Get(stub shim.ChaincodeStubInterface, genkey FuncGenKey, args []string, nofElm int) (res string, err error) {
-	res = ""
+func Get(stub shim.ChaincodeStubInterface, genkey FuncGenKey, args []string, nofElm int) (key, res string, err error) {
 	if len(args) != nofElm {
 		err = errors.New("Invalid Arguments")
 		return
 	}
-	key, err := genkey(stub, args)
+	key, err = genkey(stub, args)
 	if err != nil {
 		return
 	}
@@ -131,8 +125,7 @@ func Get(stub shim.ChaincodeStubInterface, genkey FuncGenKey, args []string, nof
 	if err != nil {
 		return
 	}
-	json, err := json.Marshal(data)
-	res = string(json)
+	res = string(data)
 	return
 }
 
@@ -147,12 +140,12 @@ func Sha1(v string) string {
 	return hex.EncodeToString(h.Sum(nil))
 }
 
-// Sha1Byte is a function for generate sha1 hash of target binary data
+// Sha1B is a function for generate sha1 hash of target binary data
 //   parameters :
 //     stub - object for accessing ledgers from chaincode
 //   returns :
 //     - sha1 hash
-func Sha1Byte(v []byte) []byte {
+func Sha1B(v []byte) []byte {
 	h := sha1.New()
 	h.Write(v)
 	return h.Sum(nil)
@@ -167,4 +160,11 @@ func Sha1Byte(v []byte) []byte {
 func ToJSON(o interface{}) (string, error) {
 	data, err := json.Marshal(o)
 	return string(data), err
+}
+
+func CheckParam(prm []string, validlen int) error {
+	if len(prm) != validlen {
+		return errors.New("length of parameter is not valid.")
+	}
+	return nil
 }
