@@ -1,8 +1,7 @@
 /*
 Package peer provides chaincode for managing PEER data.
-TODO: nessesary to implement logic for verification whether peer can be trusted
+  TODO: nessesary to implement logic for verification whether peer can be trusted
 */
-
 package peer
 
 import (
@@ -74,7 +73,7 @@ func Register(stub shim.ChaincodeStubInterface, args []string) (key, res string,
 //     res - response data
 //     err - either error object or nil
 func Get(stub shim.ChaincodeStubInterface, args []string) (key, res string, err error) {
-	return cmn.Get(stub, generateKey, args, 1)
+	return cmn.Get(stub, args)
 }
 
 // Update is a function for updating PEER information

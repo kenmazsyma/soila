@@ -1,7 +1,6 @@
 /*
 Package main provides chaincode for soila_chain.
 */
-
 package main
 
 import (
@@ -11,6 +10,7 @@ import (
 	"github.com/kenmazsyma/soila/chaincode/peer"
 	"github.com/kenmazsyma/soila/chaincode/person"
 	"github.com/kenmazsyma/soila/chaincode/project"
+	"github.com/kenmazsyma/soila/chaincode/token"
 )
 
 // ================================================
@@ -58,6 +58,9 @@ var invoke_list = map[string]invokeRoutineType{
 	"project.register":         project.Register,
 	"project.get":              project.Get,
 	"project.updatestatus":     project.UpdateStatus,
+	"token.register":           token.Register,
+	"token.update":             token.Update,
+	"token.remove":             token.Remove,
 }
 
 // Invoke is a function for executing chaincode for soila_chain

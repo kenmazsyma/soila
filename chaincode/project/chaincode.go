@@ -1,7 +1,6 @@
 /*
 Package project provdes chaincode for managing PROJECT data.
 */
-
 package project
 
 import (
@@ -93,12 +92,12 @@ func Register(stub shim.ChaincodeStubInterface, args []string) (key, res string,
 // Get is a function for getting PROJECT information from ledger
 //   parameters :
 //     stub - object of chaincode information
-//     args - [peerkey, id]
+//     args - [projectkey]
 //  return :
 //    - response data
 //    - either error object or nil
 func Get(stub shim.ChaincodeStubInterface, args []string) (key, res string, err error) {
-	return cmn.Get(stub, generateKey, args, 2)
+	return cmn.Get(stub, args)
 }
 
 // UpdateStatus is a function for updating PROJECT staus

@@ -1,10 +1,11 @@
 /*
 Package token provides chaincode for managing TOKEN data.
 */
-
 package token
 
-import ()
+import (
+//"github.com/hyperledger/fabric/core/chaincode/shim"
+)
 
 // generateKey is a function for generating key from id of PROJECT
 //   parameters :
@@ -13,9 +14,9 @@ import ()
 //   return :
 //     - key
 //     - whether error object or nil
-func generateKey(stub shim.ChaincodeStubInterface, args []string) (string, error) {
-	return stub.CreateCompositeKey(KEY_TOKEN, args[0:2])
-}
+//func generateKey(stub shim.ChaincodeStubInterface, args []string) (string, error) {
+//	return stub.CreateCompositeKey(KEY_TOKEN, args[0:2])
+//}
 
 // get_and_check is a function for getting data of PERSON
 //   parameters :
@@ -26,13 +27,15 @@ func generateKey(stub shim.ChaincodeStubInterface, args []string) (string, error
 //     - PERSON object
 //     - key
 //     - whether error object or nil
-func get_and_check(stub shim.ChaincodeStubInterface, args []string, nofElm int) (rec *Token, key string, err error) {
-	rec = nil
-	js, key, err := cmn.VerifyForUpdate(stub, generateKey, args, nofElm)
-	if err != nil {
-		return
-	}
-	*rec = Token{}
-	err = json.Unmarshal(js, rec)
-	return
+//func get_and_check(stub shim.ChaincodeStubInterface, args []string, nofElm int) (rec *Token, key string, err error) {
+//	rec = nil
+//	js, key, err := cmn.VerifyForUpdate(stub, generateKey, args, nofElm)
+//	if err != nil {
+//		return
+//	}
+//	*rec = Token{}
+//	err = json.Unmarshal(js, rec)
+//	return
+//}
+func test() {
 }

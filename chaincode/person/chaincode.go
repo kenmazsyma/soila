@@ -2,7 +2,6 @@
 Package person provides chaincode for managing PERSON data.
 TODO:nessesary to implement authentication logic
 */
-
 package person
 
 import (
@@ -134,12 +133,12 @@ func Update(stub shim.ChaincodeStubInterface, args []string) (key, res string, e
 // Get is a function for getting PERSON object
 //   parameters  :
 //     stub - object for accessing ledgers from chaincode
-//     args - [peerkey, personid]
+//     args - [personkey]
 //   return :
 //     - json data of PERSON data
 //     - error string if error occured
 func Get(stub shim.ChaincodeStubInterface, args []string) (string, string, error) {
-	return cmn.Get(stub, generateKey, args, 2)
+	return cmn.Get(stub, args)
 }
 
 // AddActivity is a function for append hash of activity information for PERSON

@@ -1,7 +1,6 @@
 /*
 Package cmn provides common functions for chaincode.
 */
-
 package cmn
 
 import (
@@ -111,7 +110,7 @@ func VerifyForUpdate(stub shim.ChaincodeStubInterface, genkey FuncGenKey, args [
 //   returns :
 //     res - data got from ledger
 //     err - whether error obejct or nil
-func Get(stub shim.ChaincodeStubInterface, genkey FuncGenKey, args []string, nofElm int) (key, res string, err error) {
+/*func Get(stub shim.ChaincodeStubInterface, genkey FuncGenKey, args []string, nofElm int) (key, res string, err error) {
 	if len(args) != nofElm {
 		err = errors.New("Invalid Arguments")
 		return
@@ -120,6 +119,25 @@ func Get(stub shim.ChaincodeStubInterface, genkey FuncGenKey, args []string, nof
 	if err != nil {
 		return
 	}
+	log.Debug(key)
+	data, err := stub.GetState(key)
+	if err != nil {
+		return
+	}
+	res = string(data)
+	return
+}*/
+
+// Get is a function for getting data from ledger
+//   parameters :
+//     stub - object for accessing ledgers from chaincode
+//     args - target parameters for verify
+//   returns :
+//     key - key of data
+//     res - data got from ledger
+//     err - whether error obejct or nil
+func Get(stub shim.ChaincodeStubInterface, args []string) (key, res string, err error) {
+	key = args[0]
 	log.Debug(key)
 	data, err := stub.GetState(key)
 	if err != nil {
