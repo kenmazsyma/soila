@@ -4,6 +4,8 @@ Package test provides common module for testing.
 package test
 
 import (
+	"encoding/base64"
+	"encoding/json"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	pb "github.com/hyperledger/fabric/protos/peer"
 	"github.com/kenmazsyma/soila/chaincode/root"
@@ -15,6 +17,15 @@ func S2b(src []string) (ret [][]byte) {
 		ret = append(ret, []byte(v))
 	}
 	return
+}
+
+func P2o(payload []byte) (ret []interface{}, err error) {
+	err = json.Unmarshal(payload, &ret)
+	return
+}
+
+func DecodeBase64(src string) ([]byte, error) {
+	return base64.StdEncoding.DecodeString(src)
 }
 
 func CreateStub(invoke_list map[string]root.InvokeRoutineType) *shim.MockStub {

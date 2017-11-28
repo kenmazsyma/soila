@@ -35,10 +35,9 @@ func generateKey(stub shim.ChaincodeStubInterface, args []string) (ret string, e
 //     stub - object of chaincode information
 //     args - [address]
 //   return :
-//     key - key value
-//     res - response data
+//     ret - return value
 //     err - either error object or nil
-func Register(stub shim.ChaincodeStubInterface, args []string) (key, res string, err error) {
+func Register(stub shim.ChaincodeStubInterface, args []string) (ret []interface{}, err error) {
 	// get peer's signature
 	log.Info("start:")
 	info := Peer{}
@@ -53,7 +52,7 @@ func Register(stub shim.ChaincodeStubInterface, args []string) (key, res string,
 	// verify if peer is already registered
 	info.Hash = cmn.Sha1B(sig)
 	log.Debug(info.Hash)
-	key, err = cmn.VerifyForRegistration(stub, generateKey, []string{string(info.Hash)})
+	key, err := cmn.VerifyForRegistration(stub, generateKey, []string{string(info.Hash)})
 	if err != nil {
 		return
 	}
@@ -61,6 +60,7 @@ func Register(stub shim.ChaincodeStubInterface, args []string) (key, res string,
 	log.Info("Register:" + key)
 	info.Address = args[0]
 	err = cmn.Put(stub, key, info)
+	ret = []interface{}{[]byte(key)}
 	return
 }
 
@@ -69,10 +69,9 @@ func Register(stub shim.ChaincodeStubInterface, args []string) (key, res string,
 //     stub - object of chaincode information
 //     args - [key]
 //   return :
-//     key - key value
-//     res - response data
+//     ret - return value
 //     err - either error object or nil
-func Get(stub shim.ChaincodeStubInterface, args []string) (key, res string, err error) {
+func Get(stub shim.ChaincodeStubInterface, args []string) ([]interface{}, error) {
 	return cmn.Get(stub, args)
 }
 
@@ -81,18 +80,16 @@ func Get(stub shim.ChaincodeStubInterface, args []string) (key, res string, err 
 //     stub - object of chaincode information
 //     args - [key, address]
 //   return :
-//     key - key value
-//     res - response data
+//     ret - return value
 //     err - either error object or nil
-func Update(stub shim.ChaincodeStubInterface, args []string) (key, res string, err error) {
+func Update(stub shim.ChaincodeStubInterface, args []string) (ret []interface{}, err error) {
 	// check parameter
 	if err = cmn.CheckParam(args, 1); err != nil {
 		return
 	}
 	// check if data is exist
 	log.Info("start:")
-	key = args[0]
-	val, err := stub.GetState(key)
+	val, err := stub.GetState(args[0])
 	if err != nil {
 		return
 	}
@@ -120,7 +117,8 @@ func Update(stub shim.ChaincodeStubInterface, args []string) (key, res string, e
 	}
 	// update data
 	data.Address = args[1]
-	err = cmn.Put(stub, key, data)
+	err = cmn.Put(stub, args[0], data)
+	ret = []interface{}{[]byte(args[0])}
 	return
 }
 
@@ -130,17 +128,15 @@ func Update(stub shim.ChaincodeStubInterface, args []string) (key, res string, e
 //     stub - object of chaincode information
 //     args - [key]
 //   return :
-//     key - key value
-//     res - response data
+//     ret - return value
 //     err - either error object or nil
-func Deregister(stub shim.ChaincodeStubInterface, args []string) (key, res string, err error) {
+func Deregister(stub shim.ChaincodeStubInterface, args []string) (ret []interface{}, err error) {
 	// check parameter
 	if err = cmn.CheckParam(args, 1); err != nil {
 		return
 	}
 	// check if data is exist
-	key = args[0]
-	val, err := stub.GetState(key)
+	val, err := stub.GetState(args[0])
 	if err != nil {
 		return
 	}
@@ -161,6 +157,6 @@ func Deregister(stub shim.ChaincodeStubInterface, args []string) (key, res strin
 		return
 	}
 	// delete data
-	err = cmn.Delete(stub, key)
+	err = cmn.Delete(stub, args[0])
 	return
 }

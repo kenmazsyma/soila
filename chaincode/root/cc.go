@@ -4,12 +4,13 @@ Package root provides root routine for chaincode.
 package root
 
 import (
+	"encoding/json"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	pb "github.com/hyperledger/fabric/protos/peer"
 	"github.com/kenmazsyma/soila/chaincode/log"
 )
 
-type InvokeRoutineType func(shim.ChaincodeStubInterface, []string) (string, string, error)
+type InvokeRoutineType func(shim.ChaincodeStubInterface, []string) ([]interface{}, error)
 type CC struct {
 	sub map[string]InvokeRoutineType
 }
@@ -41,11 +42,15 @@ func (t *CC) Invoke(stub shim.ChaincodeStubInterface) pb.Response {
 	if m == nil {
 		return shim.Error("Invalid function name.")
 	}
-	ret1, ret2, err := m(stub, args)
+	ret, err := m(stub, args)
 	if err != nil {
 		return shim.Error(err.Error())
 	}
-	return shim.Success([]byte("['" + ret1 + "'," + ret2 + "]"))
+	js, err := json.Marshal(ret)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+	return shim.Success(js)
 }
 
 // ================================================
