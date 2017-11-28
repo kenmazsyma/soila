@@ -9,7 +9,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
-	"github.com/kenmazsyma/soila/chaincode/log"
+	. "github.com/kenmazsyma/soila/chaincode/log"
 )
 
 // Put is a function for put data info ledger
@@ -19,14 +19,16 @@ import (
 //   returns :
 //     - whether error object or nil
 func Put(stub shim.ChaincodeStubInterface, key string, val interface{}) error {
+	D("check parameter")
 	if val == nil {
 		return errors.New("invalid param")
 	}
+	D("convert parameter to json")
 	jsVal, err := json.Marshal(val)
 	if err != nil {
 		return err
 	}
-	log.Debug(key)
+	D("put data to leder:%s", key)
 	err = stub.PutState(key, []byte(jsVal))
 	return err
 }
@@ -53,11 +55,12 @@ type FuncGenKey func(shim.ChaincodeStubInterface, []string) (string, error)
 //     key - generated key
 //     err - whether error object or nil
 func VerifyForRegistration(stub shim.ChaincodeStubInterface, genkey FuncGenKey, args []string) (key string, err error) {
+	D("generate key")
 	key, err = genkey(stub, args)
 	if err != nil {
 		return
 	}
-	// check if data is already exists.
+	D("check if data is already exists")
 	val, err := stub.GetState(key)
 	if err != nil {
 		return
@@ -80,16 +83,17 @@ func VerifyForRegistration(stub shim.ChaincodeStubInterface, genkey FuncGenKey, 
 //     key - generated key
 //     err - whether error object or nil
 func VerifyForUpdate(stub shim.ChaincodeStubInterface, genkey FuncGenKey, args []string, nofElm int) (ret []byte, key string, err error) {
+	D("check count of parameters")
 	if len(args) != nofElm {
 		err = errors.New("Invalid Arguments")
 		return
 	}
-	// get ID from ledger
+	D("generate key")
 	key, err = genkey(stub, args)
 	if err != nil {
 		return
 	}
-	// check if data is already exists.
+	D("check if data is already exists")
 	ret, err = stub.GetState(key)
 	if err != nil {
 		return
@@ -104,33 +108,6 @@ func VerifyForUpdate(stub shim.ChaincodeStubInterface, genkey FuncGenKey, args [
 // Get is a function for getting data from ledger
 //   parameters :
 //     stub - object for accessing ledgers from chaincode
-//     genkey - function for generating key
-//     args - target parameters for verify
-//     nofElm - expected length of args
-//   returns :
-//     res - data got from ledger
-//     err - whether error obejct or nil
-/*func Get(stub shim.ChaincodeStubInterface, genkey FuncGenKey, args []string, nofElm int) (key, res string, err error) {
-	if len(args) != nofElm {
-		err = errors.New("Invalid Arguments")
-		return
-	}
-	key, err = genkey(stub, args)
-	if err != nil {
-		return
-	}
-	log.Debug(key)
-	data, err := stub.GetState(key)
-	if err != nil {
-		return
-	}
-	res = string(data)
-	return
-}*/
-
-// Get is a function for getting data from ledger
-//   parameters :
-//     stub - object for accessing ledgers from chaincode
 //     args - target parameters for verify
 //   returns :
 //     key - key of data
@@ -138,7 +115,7 @@ func VerifyForUpdate(stub shim.ChaincodeStubInterface, genkey FuncGenKey, args [
 //     err - whether error obejct or nil
 func Get(stub shim.ChaincodeStubInterface, args []string) (key, res string, err error) {
 	key = args[0]
-	log.Debug(key)
+	D("get data from ledger:%s", key)
 	data, err := stub.GetState(key)
 	if err != nil {
 		return
@@ -163,10 +140,10 @@ func Sha1(v string) string {
 //     stub - object for accessing ledgers from chaincode
 //   returns :
 //     - sha1 hash
-func Sha1B(v []byte) []byte {
+func Sha1B(v []byte) string {
 	h := sha1.New()
 	h.Write(v)
-	return h.Sum(nil)
+	return hex.EncodeToString(h.Sum(nil))
 }
 
 // ToJSON is a function for generating json string of target object

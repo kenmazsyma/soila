@@ -13,7 +13,7 @@ import (
 )
 
 type Peer struct {
-	Hash    []byte // hash of peer's signature[key]
+	Hash    string // hash of peer's signature[key]
 	Address string // url of wenapp / webapi
 }
 
@@ -52,7 +52,7 @@ func Register(stub shim.ChaincodeStubInterface, args []string) (key, res string,
 	}
 	// verify if peer is already registered
 	info.Hash = cmn.Sha1B(sig)
-	log.DebugB(info.Hash)
+	log.Debug(info.Hash)
 	key, err = cmn.VerifyForRegistration(stub, generateKey, []string{string(info.Hash)})
 	if err != nil {
 		return
@@ -106,7 +106,7 @@ func Update(stub shim.ChaincodeStubInterface, args []string) (key, res string, e
 	if err != nil {
 		return
 	}
-	log.DebugB(data.Hash)
+	log.Debug(data.Hash)
 	valid, err := CompareHash(stub, data.Hash)
 	if err != nil {
 		return
@@ -150,7 +150,7 @@ func Deregister(stub shim.ChaincodeStubInterface, args []string) (key, res strin
 	if err != nil {
 		return
 	}
-	log.DebugB(data.Hash)
+	log.Debug(data.Hash)
 	// verify if data is owned by sender
 	valid, err := CompareHash(stub, data.Hash)
 	if err != nil {
