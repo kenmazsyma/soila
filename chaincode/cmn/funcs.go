@@ -115,16 +115,12 @@ func VerifyForUpdate(stub shim.ChaincodeStubInterface, genkey FuncGenKey, args [
 //     res - data got from ledger
 //     err - whether error obejct or nil
 func Get(stub shim.ChaincodeStubInterface, args []string) (ret []interface{}, err error) {
-	//	key, err := DecodeBase64(args[0])
-	//	if err != nil {
-	//		return
-	//	}
 	D("get data from ledger:%s", args[0])
 	data, err := stub.GetState(args[0])
 	if err != nil {
 		return
 	}
-	ret = []interface{}{args[0], data}
+	ret = []interface{}{[]byte(args[0]), data}
 	return
 }
 

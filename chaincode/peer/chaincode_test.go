@@ -5,7 +5,6 @@ package peer
 
 import (
 	"fmt"
-	"github.com/kenmazsyma/soila/chaincode/cmn"
 	"github.com/kenmazsyma/soila/chaincode/root"
 	. "github.com/kenmazsyma/soila/chaincode/test"
 	"os"
@@ -81,24 +80,19 @@ func Test_Get1(t *testing.T) {
 	// register 1st peer
 	stub.SetCreator(peer1)
 	res := stub.MockInvoke("1", MakeParam("peer.register", "1"))
-	ret, err := P2o(res.Payload)
-	bt := []byte{}
-	if err != nil {
-		t.Errorf(err.Error())
-	} else {
-		bt, _ = cmn.DecodeBase64(ret[0].(string))
-		fmt.Println(string(bt))
-	}
+	ret, _ := P2o(res.Payload)
+	v, _ := EncodeAll(ret)
 	// register 2nd peer
 	stub.SetCreator(peer2)
 	res = stub.MockInvoke("1", MakeParam("peer.register", "2"))
 	// get 1st data
 	stub.SetCreator(peer1)
-	res = stub.MockInvoke("1", MakeParam("peer.get", string(bt)))
+	res = stub.MockInvoke("1", MakeParam("peer.get", v[0]))
 	CheckStatus(t, res, 200)
-	ret, err = P2o(res.Payload)
+	ret, _ = P2o(res.Payload)
+	fmt.Printf("payload:%s\n", string(res.Payload))
 	expect := "{\"Hash\":\"d80e5e55dd4128844827a53d7363045485f08751\",\"Address\":\"1\"}"
-	CheckPayload(t, res, []string{string(bt), expect})
+	CheckPayload(t, res, []interface{}{v[0], expect})
 }
 
 // number of parameters is not correct(1)
@@ -153,4 +147,25 @@ func Test_Deregister3(t *testing.T) {
 	res = stub.MockInvoke("1", MakeParam("peer.deregister", v[0]))
 	CheckStatus(t, res, 500)
 	CheckMessage(t, res, "Peer is not owned by sender")
+}
+
+// success to deregister
+func Test_Deregister4(t *testing.T) {
+	peer1 := []byte("abcdef0123456789")
+	stub := CreateStub(invoke_list)
+	// register peer
+	stub.SetCreator(peer1)
+	res := stub.MockInvoke("1", MakeParam("peer.register", "1"))
+	o, err := P2o(res.Payload)
+	if err != nil {
+		t.Errorf("register failed : %s", err.Error())
+	}
+	v, _ := EncodeAll(o)
+	// deregister peer
+	res = stub.MockInvoke("1", MakeParam("peer.deregister", v[0]))
+	CheckStatus(t, res, 200)
+	// verify if data is successfully deleted
+	res = stub.MockInvoke("1", MakeParam("peer.get", v[0]))
+	CheckStatus(t, res, 200)
+	CheckPayload(t, res, []interface{}{v[0], nil})
 }

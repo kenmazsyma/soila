@@ -64,7 +64,7 @@ func CheckStatus(t *testing.T, res pb.Response, expect int32) {
 	}
 }
 
-func CheckPayload(t *testing.T, res pb.Response, expect []string) {
+func CheckPayload(t *testing.T, res pb.Response, expect []interface{}) {
 	ret, err := P2o(res.Payload)
 	if err != nil {
 		t.Errorf("\nerror raised when converting json to object\n%s\n", err.Error())
@@ -73,10 +73,16 @@ func CheckPayload(t *testing.T, res pb.Response, expect []string) {
 		t.Errorf("\nlength of payload\nexpect:%s\nactual:%s", len(expect), len(ret))
 	}
 	for i := 0; i < len(expect); i++ {
-		decode, _ := cmn.DecodeBase64(ret[i].(string))
-		actual := string(decode)
-		if actual != expect[i] {
-			t.Errorf("\nindex:%d\nexpect:%s\nactual:%s", i, expect[i], actual)
+		if ret[i] != nil {
+			decode, _ := cmn.DecodeBase64(ret[i].(string))
+			actual := string(decode)
+			if actual != expect[i] {
+				t.Errorf("\nindex:%d\nexpect:%s\nactual:%s", i, expect[i], actual)
+			}
+		} else {
+			if ret[i] != expect[i] {
+				t.Errorf("\nindex:%d\nexpect:%s\nactual:%s", i, expect[i], ret[i])
+			}
 		}
 	}
 }
