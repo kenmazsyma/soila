@@ -9,7 +9,7 @@ import (
 	"errors"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	"github.com/kenmazsyma/soila/chaincode/cmn"
-	"github.com/kenmazsyma/soila/chaincode/log"
+	. "github.com/kenmazsyma/soila/chaincode/log"
 )
 
 type Peer struct {
@@ -38,26 +38,24 @@ func generateKey(stub shim.ChaincodeStubInterface, args []string) (ret string, e
 //     ret - return value
 //     err - either error object or nil
 func Register(stub shim.ChaincodeStubInterface, args []string) (ret []interface{}, err error) {
-	// get peer's signature
-	log.Info("start:")
+	D("get peer's signature")
 	info := Peer{}
 	sig, err := stub.GetCreator()
 	if err != nil {
 		return
 	}
-	// check parameter
+	D("check parameter")
 	if err = cmn.CheckParam(args, 1); err != nil {
 		return
 	}
-	// verify if peer is already registered
+	D("verify if peer is already registered")
 	info.Hash = cmn.Sha1B(sig)
-	log.Debug(info.Hash)
+	D("hash:%s", info.Hash)
 	key, err := cmn.VerifyForRegistration(stub, generateKey, []string{string(info.Hash)})
 	if err != nil {
 		return
 	}
-	// register peer
-	log.Info("Register:" + key)
+	Info("register peer: %s", key)
 	info.Address = args[0]
 	err = cmn.Put(stub, key, info)
 	ret = []interface{}{[]byte(key)}
@@ -83,12 +81,11 @@ func Get(stub shim.ChaincodeStubInterface, args []string) ([]interface{}, error)
 //     ret - return value
 //     err - either error object or nil
 func Update(stub shim.ChaincodeStubInterface, args []string) (ret []interface{}, err error) {
-	// check parameter
+	D("check parameter")
 	if err = cmn.CheckParam(args, 1); err != nil {
 		return
 	}
-	// check if data is exist
-	log.Info("start:")
+	D("check if data is exists")
 	val, err := stub.GetState(args[0])
 	if err != nil {
 		return
@@ -96,14 +93,13 @@ func Update(stub shim.ChaincodeStubInterface, args []string) (ret []interface{},
 	if val == nil {
 		return
 	}
-	// check if data is owned by sender
-	log.DebugB(val)
+	D("check if data is owned by sender")
 	data := Peer{}
 	err = json.Unmarshal(val, &data)
 	if err != nil {
 		return
 	}
-	log.Debug(data.Hash)
+	D("hash:%s", data.Hash)
 	valid, err := CompareHash(stub, data.Hash)
 	if err != nil {
 		return
@@ -115,7 +111,7 @@ func Update(stub shim.ChaincodeStubInterface, args []string) (ret []interface{},
 	if data.Address == args[1] {
 		return
 	}
-	// update data
+	D("udpate data")
 	data.Address = args[1]
 	err = cmn.Put(stub, args[0], data)
 	ret = []interface{}{[]byte(args[0])}
@@ -131,23 +127,23 @@ func Update(stub shim.ChaincodeStubInterface, args []string) (ret []interface{},
 //     ret - return value
 //     err - either error object or nil
 func Deregister(stub shim.ChaincodeStubInterface, args []string) (ret []interface{}, err error) {
-	// check parameter
+	D("check parameter")
 	if err = cmn.CheckParam(args, 1); err != nil {
 		return
 	}
-	// check if data is exist
+	D("check if data is exists:%s", args[0])
 	val, err := stub.GetState(args[0])
 	if err != nil {
 		return
 	}
-	log.DebugB(val)
+	D("val:%s", val)
 	data := Peer{}
 	err = json.Unmarshal(val, &data)
 	if err != nil {
 		return
 	}
-	log.Debug(data.Hash)
-	// verify if data is owned by sender
+	D("hash:%s", data.Hash)
+	D("verify if data is owned by sender")
 	valid, err := CompareHash(stub, data.Hash)
 	if err != nil {
 		return
@@ -156,7 +152,7 @@ func Deregister(stub shim.ChaincodeStubInterface, args []string) (ret []interfac
 		err = errors.New("Peer is not owned by sender")
 		return
 	}
-	// delete data
+	D("delete data")
 	err = cmn.Delete(stub, args[0])
 	return
 }

@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	pb "github.com/hyperledger/fabric/protos/peer"
+	"github.com/kenmazsyma/soila/chaincode/cmn"
 	"github.com/kenmazsyma/soila/chaincode/log"
 )
 
@@ -42,7 +43,20 @@ func (t *CC) Invoke(stub shim.ChaincodeStubInterface) pb.Response {
 	if m == nil {
 		return shim.Error("Invalid function name.")
 	}
-	ret, err := m(stub, args)
+	decoded := []string{}
+	for i := 0; i < len(args); i++ {
+		if len(args[i]) > 0 {
+			log.Debug(args[i])
+			key, err := cmn.DecodeBase64(args[i])
+			if err != nil {
+				return shim.Error(err.Error())
+			}
+			decoded = append(decoded, string(key))
+		} else {
+			decoded = append(decoded, args[i])
+		}
+	}
+	ret, err := m(stub, decoded)
 	if err != nil {
 		return shim.Error(err.Error())
 	}
