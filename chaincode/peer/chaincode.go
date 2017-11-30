@@ -82,7 +82,7 @@ func Get(stub shim.ChaincodeStubInterface, args []string) ([]interface{}, error)
 //     err - either error object or nil
 func Update(stub shim.ChaincodeStubInterface, args []string) (ret []interface{}, err error) {
 	D("check parameter")
-	if err = cmn.CheckParam(args, 1); err != nil {
+	if err = cmn.CheckParam(args, 2); err != nil {
 		return
 	}
 	D("check if data is exists")
@@ -90,7 +90,8 @@ func Update(stub shim.ChaincodeStubInterface, args []string) (ret []interface{},
 	if err != nil {
 		return
 	}
-	if val == nil {
+	if len(val) == 0 {
+		err = errors.New("data not found.")
 		return
 	}
 	D("check if data is owned by sender")
@@ -105,7 +106,7 @@ func Update(stub shim.ChaincodeStubInterface, args []string) (ret []interface{},
 		return
 	}
 	if !valid {
-		err = errors.New("Peer is not owned by sender")
+		err = errors.New("peer is not owned by sender.")
 		return
 	}
 	if data.Address == args[1] {

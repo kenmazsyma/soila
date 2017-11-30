@@ -8,7 +8,7 @@ import (
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	pb "github.com/hyperledger/fabric/protos/peer"
 	"github.com/kenmazsyma/soila/chaincode/cmn"
-	"github.com/kenmazsyma/soila/chaincode/log"
+	. "github.com/kenmazsyma/soila/chaincode/log"
 )
 
 type InvokeRoutineType func(shim.ChaincodeStubInterface, []string) ([]interface{}, error)
@@ -26,7 +26,7 @@ func (t *CC) SetInvokeMap(sub map[string]InvokeRoutineType) {
 //   return :
 //     response object
 func (t *CC) Init(stub shim.ChaincodeStubInterface) pb.Response {
-	log.Debug("CC.Init")
+	D("CC.Init")
 	return shim.Success(nil)
 }
 
@@ -36,9 +36,9 @@ func (t *CC) Init(stub shim.ChaincodeStubInterface) pb.Response {
 //   return :
 //     response object
 func (t *CC) Invoke(stub shim.ChaincodeStubInterface) pb.Response {
-	log.Debug("CC.Invoke")
+	D("CC.Invoke")
 	funcname, args := stub.GetFunctionAndParameters()
-	log.Debug(funcname)
+	D(funcname)
 	m := t.sub[funcname]
 	if m == nil {
 		return shim.Error("Invalid function name.")
@@ -46,7 +46,6 @@ func (t *CC) Invoke(stub shim.ChaincodeStubInterface) pb.Response {
 	decoded := []string{}
 	for i := 0; i < len(args); i++ {
 		if len(args[i]) > 0 {
-			log.Debug(args[i])
 			key, err := cmn.DecodeBase64(args[i])
 			if err != nil {
 				return shim.Error(err.Error())

@@ -5,6 +5,7 @@ package test
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	pb "github.com/hyperledger/fabric/protos/peer"
 	"github.com/kenmazsyma/soila/chaincode/cmn"
@@ -52,37 +53,41 @@ func CreateStub(invoke_list map[string]root.InvokeRoutineType) *shim.MockStub {
 	return stub
 }
 
-func CheckMessage(t *testing.T, res pb.Response, expect string) {
+func CheckMessage(cs string, t *testing.T, res pb.Response, expect string) {
 	if res.Message != expect {
-		t.Errorf("\nexpect:%s\nactual:%s", expect, res.Message)
+		t.Errorf("\n##%s##\nexpect:%s\nactual:%s", cs, expect, res.Message)
 	}
 }
 
-func CheckStatus(t *testing.T, res pb.Response, expect int32) {
+func CheckStatus(cs string, t *testing.T, res pb.Response, expect int32) {
 	if res.Status != expect {
-		t.Errorf("\nexpect:%d\nactual:%d", expect, res.Status)
+		t.Errorf("\n##%s##\nexpect:%d\nactual:%d", cs, expect, res.Status)
 	}
 }
 
-func CheckPayload(t *testing.T, res pb.Response, expect []interface{}) {
+func CheckPayload(cs string, t *testing.T, res pb.Response, expect []interface{}) {
 	ret, err := P2o(res.Payload)
 	if err != nil {
-		t.Errorf("\nerror raised when converting json to object\n%s\n", err.Error())
+		t.Errorf("\n##%s##\nerrored when converting json to object\n%s\n", cs, err.Error())
 	}
 	if len(ret) != len(expect) {
-		t.Errorf("\nlength of payload\nexpect:%s\nactual:%s", len(expect), len(ret))
+		t.Errorf("\n##%s##\nlength of payload\nexpect:%s\nactual:%s", cs, len(expect), len(ret))
 	}
 	for i := 0; i < len(expect); i++ {
 		if ret[i] != nil {
 			decode, _ := cmn.DecodeBase64(ret[i].(string))
 			actual := string(decode)
 			if actual != expect[i] {
-				t.Errorf("\nindex:%d\nexpect:%s\nactual:%s", i, expect[i], actual)
+				t.Errorf("\n##%s##\nindex:%d\nexpect:%s\nactual:%s", cs, i, expect[i], actual)
 			}
 		} else {
 			if ret[i] != expect[i] {
-				t.Errorf("\nindex:%d\nexpect:%s\nactual:%s", i, expect[i], ret[i])
+				t.Errorf("\n##%s##\nindex:%d\nexpect:%s\nactual:%s", cs, i, expect[i], ret[i])
 			}
 		}
 	}
+}
+
+func CASE(val string) {
+	fmt.Println("### " + val + " ###")
 }

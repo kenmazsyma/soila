@@ -120,6 +120,10 @@ func Get(stub shim.ChaincodeStubInterface, args []string) (ret []interface{}, er
 	if err != nil {
 		return
 	}
+	if len(data) == 0 {
+		err = errors.New("data not found.")
+		return
+	}
 	ret = []interface{}{[]byte(args[0]), data}
 	return
 }
