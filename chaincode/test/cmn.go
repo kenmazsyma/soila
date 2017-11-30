@@ -36,6 +36,10 @@ func P2o(payload []byte) (ret []interface{}, err error) {
 	err = json.Unmarshal(payload, &ret)
 	return
 }
+func P2o2(payload []byte) (ret interface{}, err error) {
+	err = json.Unmarshal(payload, &ret)
+	return
+}
 
 func EncodeAll(src []interface{}) (ret []string, err error) {
 	ret = []string{}

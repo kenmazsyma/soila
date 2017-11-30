@@ -67,8 +67,8 @@ func Register(stub shim.ChaincodeStubInterface, args []string) (ret []interface{
 //     stub - object of chaincode information
 //     args - [key]
 //   return :
-//     ret - return value
-//     err - either error object or nil
+//     - return value
+//     - either error object or nil
 func Get(stub shim.ChaincodeStubInterface, args []string) ([]interface{}, error) {
 	return cmn.Get(stub, args)
 }

@@ -9,7 +9,7 @@ import (
 	"errors"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	"github.com/kenmazsyma/soila/chaincode/cmn"
-	"github.com/kenmazsyma/soila/chaincode/log"
+	. "github.com/kenmazsyma/soila/chaincode/log"
 	"github.com/kenmazsyma/soila/chaincode/peer"
 )
 
@@ -37,7 +37,7 @@ const KEY_TYPE = "PERSON"
 //     - key
 //     - whether error object or nil
 func generateKey(stub shim.ChaincodeStubInterface, args []string) (string, error) {
-	return stub.CreateCompositeKey(KEY_TYPE, args)
+	return stub.CreateCompositeKey(KEY_TYPE, []string{cmn.Sha1(args[0]), args[1]})
 }
 
 // get_and_check is a function for getting data of PERSON
@@ -55,7 +55,7 @@ func get_and_check(stub shim.ChaincodeStubInterface, args []string, nofElm int) 
 	if err != nil {
 		return
 	}
-	*rec = Person{}
+	rec = &Person{}
 	err = json.Unmarshal(js, rec)
 	return
 }
@@ -65,25 +65,25 @@ func get_and_check(stub shim.ChaincodeStubInterface, args []string, nofElm int) 
 //     stub - object for accessing ledgers from chaincode
 //     args - [personid, data]
 //   return :
-//     - response data
-//     - error object if error occured
-func Register(stub shim.ChaincodeStubInterface, args []string) (key, res string, err error) {
-	// check parameter
+//     ret - return value
+//     err - either error object or nil
+func Register(stub shim.ChaincodeStubInterface, args []string) (ret []interface{}, err error) {
+	D("check parameter")
 	if err = cmn.CheckParam(args, 2); err != nil {
 		return
 	}
-	// get PEER key for sender
+	D("get PEER key for sender")
 	peerkey, err := peer.GetKey(stub)
 	if err != nil {
 		return
 	}
-	log.Debug(string(peerkey))
-	// check if data is already exist
-	key, err = cmn.VerifyForRegistration(stub, generateKey, []string{peerkey, args[0]})
+	D("key of PEER:%s", string(peerkey))
+	D("check if data is already exist")
+	key, err := cmn.VerifyForRegistration(stub, generateKey, []string{peerkey, args[0]})
 	if err != nil {
 		return
 	}
-	// put data into ledger
+	D("put data into ledger")
 	data := Person{
 		PeerKey:    peerkey,
 		Id:         args[0],
@@ -92,6 +92,7 @@ func Register(stub shim.ChaincodeStubInterface, args []string) (key, res string,
 		Reputation: []PersonReputation{},
 	}
 	err = cmn.Put(stub, key, data)
+	ret = []interface{}{[]byte(key)}
 	return
 }
 
@@ -100,33 +101,34 @@ func Register(stub shim.ChaincodeStubInterface, args []string) (key, res string,
 //     stub - object for accessing ledgers from chaincode
 //     args - [personid, data]
 //   return :
-//     - response data
-//     - error object if error occured
-func Update(stub shim.ChaincodeStubInterface, args []string) (key, res string, err error) {
-	// check parameter
+//     ret - return value
+//     err - either error object or nil
+func Update(stub shim.ChaincodeStubInterface, args []string) (ret []interface{}, err error) {
+	D("check parameter")
 	if len(args) != 2 {
-		err = errors.New("Invalid Parameter")
+		err = errors.New("length of parameter is not valid.")
 		return
 	}
-	// get PEER key for sender
+	D("get PEER key for sender")
 	peerkey, err := peer.GetKey(stub)
 	if err != nil {
 		return
 	}
-	log.Debug(string(peerkey))
-	// check if data is exists
+	D("key of PEER:%s", string(peerkey))
+	D("check if data is exists")
 	data, key, err := get_and_check(stub, []string{peerkey, args[0]}, 2)
 	if err != nil {
 		return
 	}
 	if data == nil {
-		err = errors.New("data is not exists")
+		err = errors.New("data not found.")
 		return
 	}
-	log.Debug(key)
-	// put data into ledger
+	D("key of PERSON:%s", key)
+	D("put data into ledger")
 	(*data).Ver = append((*data).Ver, cmn.Sha1(args[1]))
 	err = cmn.Put(stub, key, (*data))
+	ret = []interface{}{[]byte(key)}
 	return
 }
 
@@ -135,9 +137,9 @@ func Update(stub shim.ChaincodeStubInterface, args []string) (key, res string, e
 //     stub - object for accessing ledgers from chaincode
 //     args - [personkey]
 //   return :
-//     - json data of PERSON data
-//     - error string if error occured
-func Get(stub shim.ChaincodeStubInterface, args []string) (string, string, error) {
+//     - return value
+//     - either error object or nil
+func Get(stub shim.ChaincodeStubInterface, args []string) ([]interface{}, error) {
 	return cmn.Get(stub, args)
 }
 
@@ -146,14 +148,14 @@ func Get(stub shim.ChaincodeStubInterface, args []string) (string, string, error
 //     stub - object for accessing ledgers from chaincode
 //     args - [peerkey, personid, contentkey]
 //   returns :
-//     - response data
-//     - whether error object or nil
-func AddActivity(stub shim.ChaincodeStubInterface, args []string) (key, res string, err error) {
-	// check parameter
+//     ret - return value
+//     err - either error object or nil
+func AddActivity(stub shim.ChaincodeStubInterface, args []string) (ret []interface{}, err error) {
+	D("check parameter")
 	if err = cmn.CheckParam(args, 3); err != nil {
 		return
 	}
-	// check if data is exists
+	D("check if data is exists")
 	data, key, err := get_and_check(stub, args, 2)
 	if err != nil {
 		return
@@ -162,10 +164,11 @@ func AddActivity(stub shim.ChaincodeStubInterface, args []string) (key, res stri
 		err = errors.New("data is not exists")
 		return
 	}
-	log.Debug(key)
-	// put data into ledger
+	D("key of PERSON:%s", key)
+	D("put data into ledger")
 	(*data).Activity = append((*data).Activity, args[2])
 	err = cmn.Put(stub, key, (*data))
+	ret = []interface{}{[]byte(key)}
 	return
 }
 
@@ -174,26 +177,26 @@ func AddActivity(stub shim.ChaincodeStubInterface, args []string) (key, res stri
 //     stub - object for accessing ledgers from chaincode
 //     args - [peerkey, personid, PERSON key of setter, contentkey, type]
 //   returns :
-//     - response data
-//     - whether error object or nil
-func AddReputation(stub shim.ChaincodeStubInterface, args []string) (key, res string, err error) {
-	// check parameter
+//     ret - return value
+//     err - either error object or nil
+func AddReputation(stub shim.ChaincodeStubInterface, args []string) (ret []interface{}, err error) {
+	D("check parameter")
 	if err = cmn.CheckParam(args, 5); err != nil {
 		return
 	}
-	// check if data is exists
+	D("check if data is exists")
 	data, key, err := get_and_check(stub, args, 2)
 	if err != nil {
 		return
 	}
-	log.Debug(key)
+	D("key of PERSON:%s", key)
 	if data == nil {
 		err = errors.New("data is not exists")
 		return
 	}
 	// TODO:add check if setter is belong to sender peer
 	// TODO:add check if reputation is already appended
-	// put data into ledger
+	D("put data into ledger")
 	rep := PersonReputation{
 		Setter:  args[2],
 		Content: args[3],
@@ -201,6 +204,7 @@ func AddReputation(stub shim.ChaincodeStubInterface, args []string) (key, res st
 	}
 	(*data).Reputation = append((*data).Reputation, rep)
 	err = cmn.Put(stub, key, (*data))
+	ret = []interface{}{[]byte(key)}
 	return
 }
 
@@ -209,14 +213,14 @@ func AddReputation(stub shim.ChaincodeStubInterface, args []string) (key, res st
 //     stub - object for accessing ledgers from chaincode
 //     args - [peerkey, personid, setter, content, type]
 //   returns :
-//     - response data
-//     - whether error object or nil
-func RemoveReputation(stub shim.ChaincodeStubInterface, args []string) (key, res string, err error) {
-	// check parameter
+//     ret - return value
+//     err - either error object or nil
+func RemoveReputation(stub shim.ChaincodeStubInterface, args []string) (ret []interface{}, err error) {
+	D("check parameter")
 	if err = cmn.CheckParam(args, 5); err != nil {
 		return
 	}
-	// check if data is exists
+	D("check if data is exists")
 	data, key, err := get_and_check(stub, args, 2)
 	if err != nil {
 		return
@@ -225,10 +229,10 @@ func RemoveReputation(stub shim.ChaincodeStubInterface, args []string) (key, res
 		err = errors.New("data is not exists")
 		return
 	}
-	log.Debug(key)
-	// put object which is removed target reputation data into ledger
+	D("key of PERSON:%s", key)
+	D("put object which is removed target reputation data into ledger")
 	for i, v := range (*data).Reputation {
-		log.Debug(v.Setter + "," + args[2] + "," + v.Content + "," + args[3])
+		D("%s,%s,%s,%s", v.Setter, args[2], v.Content, args[3])
 		if v.Setter == args[2] && v.Content == args[3] {
 			(*data).Reputation = append((*data).Reputation[0:i], (*data).Reputation[i+1:]...)
 			err = cmn.Put(stub, key, (*data))
@@ -236,5 +240,6 @@ func RemoveReputation(stub shim.ChaincodeStubInterface, args []string) (key, res
 		}
 	}
 	err = errors.New("reputation is not exists in target person")
+	ret = []interface{}{[]byte(key)}
 	return
 }

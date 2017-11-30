@@ -139,6 +139,23 @@ func Sha1(v string) string {
 	return hex.EncodeToString(h.Sum(nil))
 }
 
+// Sha1Ar is a function for generate sha1 hash of target string
+//   parameters :
+//     stub - object for accessing ledgers from chaincode
+//   returns :
+//     - sha1 hash
+func Sha1Ar(v []string) string {
+	h := sha1.New()
+	for ix, vv := range v {
+		if ix == 0 {
+			h.Write([]byte(vv))
+		} else {
+			h.Sum([]byte(vv))
+		}
+	}
+	return hex.EncodeToString(h.Sum(nil))
+}
+
 // Sha1B is a function for generate sha1 hash of target binary data
 //   parameters :
 //     stub - object for accessing ledgers from chaincode
