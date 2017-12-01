@@ -70,6 +70,12 @@ func CheckStatus(cs string, t *testing.T, res pb.Response, expect int32) {
 }
 
 func CheckPayload(cs string, t *testing.T, res pb.Response, expect []interface{}) {
+	if len(res.Payload) == 0 {
+		if len(expect) != 0 {
+			t.Errorf("\n##%s##\nPayload is nil.", cs)
+			return
+		}
+	}
 	ret, err := P2o(res.Payload)
 	if err != nil {
 		t.Errorf("\n##%s##\nerrored when converting json to object\n%s\n", cs, err.Error())

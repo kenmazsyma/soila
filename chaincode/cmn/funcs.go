@@ -76,31 +76,43 @@ func VerifyForRegistration(stub shim.ChaincodeStubInterface, genkey FuncGenKey, 
 // VerifyForUpdate is a function for verifying if parameters is valid before updating.
 //   parameters :
 //     stub - object for accessing ledgers from chaincode
-//     genkey - function for generating key
 //     args - target parameters for verify
 //     nofElm - expected length of args
 //   returns :
 //     ret - data got from ledger
-//     key - generated key
 //     err - whether error object or nil
-func VerifyForUpdate(stub shim.ChaincodeStubInterface, genkey FuncGenKey, args []string, nofElm int) (ret []byte, key string, err error) {
-	D("check count of parameters")
-	if len(args) != nofElm {
-		err = errors.New("Invalid Arguments")
+func VerifyForUpdate(stub shim.ChaincodeStubInterface, args []string, nofElm int) (ret []byte, err error) {
+	//	D("check count of parameters")
+	//	if len(args) != nofElm {
+	//		err = errors.New("Invalid Arguments")
+	//		return
+	//	}
+	//	D("generate key")
+	//	key, err = genkey(stub, args)
+	//	if err != nil {
+	//		return
+	//	}
+	//	D("check if data is already exists")
+	//	ret, err = stub.GetState(key)
+	//	if err != nil {
+	//		return
+	//	}
+	//	if ret == nil {
+	//		err = errors.New("data is not exists.")
+	//		return
+	//	}
+	//	return
+	D("check parameter")
+	if err = CheckParam(args, nofElm); err != nil {
 		return
 	}
-	D("generate key")
-	key, err = genkey(stub, args)
+	D("check if data is exists")
+	ret, err = stub.GetState(args[0])
 	if err != nil {
 		return
 	}
-	D("check if data is already exists")
-	ret, err = stub.GetState(key)
-	if err != nil {
-		return
-	}
-	if ret == nil {
-		err = errors.New("data is not exists.")
+	if len(ret) == 0 {
+		err = errors.New("data not found.")
 		return
 	}
 	return

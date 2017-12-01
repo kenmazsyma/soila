@@ -81,22 +81,26 @@ func Get(stub shim.ChaincodeStubInterface, args []string) ([]interface{}, error)
 //     ret - return value
 //     err - either error object or nil
 func Update(stub shim.ChaincodeStubInterface, args []string) (ret []interface{}, err error) {
-	D("check parameter")
-	if err = cmn.CheckParam(args, 2); err != nil {
-		return
-	}
-	D("check if data is exists")
-	val, err := stub.GetState(args[0])
+	//	D("check parameter")
+	//	if err = cmn.CheckParam(args, 2); err != nil {
+	//		return
+	//	}
+	//	D("check if data is exists")
+	//	val, err := stub.GetState(args[0])
+	//	if err != nil {
+	//		return
+	//	}
+	//	if len(val) == 0 {
+	//		err = errors.New("data not found.")
+	//		return
+	//	}
+	js, err := cmn.VerifyForUpdate(stub, args, 2)
 	if err != nil {
-		return
-	}
-	if len(val) == 0 {
-		err = errors.New("data not found.")
 		return
 	}
 	D("check if data is owned by sender")
 	data := Peer{}
-	err = json.Unmarshal(val, &data)
+	err = json.Unmarshal(js, &data)
 	if err != nil {
 		return
 	}

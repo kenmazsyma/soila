@@ -116,6 +116,6 @@ func Test_Register(t *testing.T) {
 	CASE("b-5")
 	stub.SetCreator(peer2)
 	res = stub.MockInvoke("1", MakeParam("person.update", v[0], "UPDATE!!"))
-	CheckStatus("b-5", t, res, 200)
-	CheckMessage("b-5", t, res, "data not found.")
+	CheckStatus("b-5", t, res, 500)
+	CheckMessage("b-5", t, res, "data not owned.")
 }
