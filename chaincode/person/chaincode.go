@@ -14,17 +14,17 @@ import (
 )
 
 type PersonReputation struct {
-	Setter  string // key of PERSON who generate this data
-	Content string // key of CONTENT
-	Type    string // type of reputation(TODO:under consideration)
+	Setter  string `json:"setter"`  // key of PERSON who generate this data
+	Content string `json:"content"` // key of CONTENT
+	Type    string `json:"type"`    // type of reputation(TODO:under consideration)
 }
 
 type Person struct {
-	PeerKey    string             // key of peer to which person belong
-	Id         string             // id of person
-	Ver        []string           // list of hash for information
-	Activity   []string           // list of key of CONTENT which PERSON acts
-	Reputation []PersonReputation // list of reputation for PERSON
+	PeerKey    string             `json:"peerkey"`    // key of peer to which person belong
+	Id         string             `json:"id"`         // id of person
+	Ver        []string           `json:"ver"`        // list of hash for information
+	Activity   []string           `json:"activity"`   // list of key of CONTENT which PERSON acts
+	Reputation []PersonReputation `json:"reputation"` // list of reputation for PERSON
 }
 
 const KEY_TYPE = "PERSON"
@@ -57,6 +57,28 @@ func get_and_check(stub shim.ChaincodeStubInterface, args []string, nofElm int) 
 	}
 	rec = &Person{}
 	err = json.Unmarshal(js, rec)
+	return
+}
+
+// checkOwned is a function for checking if PERSON is owned by sender
+//   parameters :
+//     stub - object for accessing ledgers from chaincode
+//     rec - PERSON object
+//   returns :
+//     err - whether error object or nil
+func checkOwned(stub shim.ChaincodeStubInterface, rec *Person) (err error) {
+	D("get PEER key for sender")
+	peerkey, err := peer.GetKey(stub)
+	if err != nil {
+		return
+	}
+	D("key of PEER:%s", string(peerkey))
+	D("check if data is owned by sender")
+	if rec.PeerKey != peerkey {
+		D("not owned:%s, %s", rec.PeerKey, peerkey)
+		err = errors.New("data not owned.")
+		return
+	}
 	return
 }
 
@@ -165,16 +187,7 @@ func AddActivity(stub shim.ChaincodeStubInterface, args []string) (ret []interfa
 		err = errors.New("data not exists")
 		return
 	}
-	D("get PEER key for sender")
-	peerkey, err := peer.GetKey(stub)
-	if err != nil {
-		return
-	}
-	D("key of PEER:%s", string(peerkey))
-	D("check if data is owned by sender")
-	if data.PeerKey != peerkey {
-		D("not owned:%s, %s", data.PeerKey, peerkey)
-		err = errors.New("data not owned.")
+	if err = checkOwned(stub, data); err != nil {
 		return
 	}
 	D("put data into ledger")

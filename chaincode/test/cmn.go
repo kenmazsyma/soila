@@ -162,7 +162,7 @@ func CheckPayloadMember(cs string, t *testing.T, v []interface{}, idx int, expec
 		}
 	}
 	if vv.(string) != expect {
-		t.Errorf("\n##%s##value is not as expexetd\nexpect:%s\nactual%s", cs, expect, vv.(string))
+		t.Errorf("\n##%s##value is not as expexetd\nexpect:%s\nactual:%s", cs, expect, vv.(string))
 	}
 }
 

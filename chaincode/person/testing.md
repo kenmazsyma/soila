@@ -20,4 +20,8 @@
 |d-3||number of parameters>expect|Test_Register|
 |d-4||not found|Test_Register|
 |d-5||not owned|Test_Register|
+|e-1|AddReputation|success||
+|e-2||number of parameters<expect|Test_Register|
+|e-3||number of parameters>expect|Test_Register|
+|e-4||not found|Test_Register|
 

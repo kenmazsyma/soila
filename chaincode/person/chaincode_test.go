@@ -129,7 +129,7 @@ func Test_Register(t *testing.T) {
 		fmt.Println(err.Error())
 		return
 	}
-	CheckPayloadMember("d-1", t, o, 1, "contentkey", []interface{}{"Activity", 0})
+	CheckPayloadMember("d-1", t, o, 1, "contentkey", []interface{}{"activity", 0})
 	CASE("d-2")
 	res = stub.MockInvoke("1", MakeParam("person.add_activity", v[0]))
 	CheckStatus("d-2", t, res, 500)
@@ -147,4 +147,29 @@ func Test_Register(t *testing.T) {
 	res = stub.MockInvoke("1", MakeParam("person.add_activity", v[0], "contentkey"))
 	CheckStatus("d-5", t, res, 500)
 	CheckMessage("d-5", t, res, "data not owned.")
+	CASE("e-1")
+	res = stub.MockInvoke("1", MakeParam("person.add_reputation", v[0], string(peer2), "contentkey", "1"))
+	CheckStatus("e-1", t, res, 200)
+	res = stub.MockInvoke("1", MakeParam("person.get", v[0]))
+	o, err = UnmarshalPayload(res.Payload)
+	if err != nil {
+		fmt.Println(err.Error())
+		return
+	}
+	CheckPayloadMember("e-1", t, o, 1, string(peer2), []interface{}{"reputation", 0, "setter"})
+	CheckPayloadMember("e-1", t, o, 1, "contentkey", []interface{}{"reputation", 0, "content"})
+	CheckPayloadMember("e-1", t, o, 1, "1", []interface{}{"reputation", 0, "type"})
+	CASE("e-2")
+	res = stub.MockInvoke("1", MakeParam("person.add_reputation", v[0], string(peer2), "contentkey"))
+	CheckStatus("e-2", t, res, 500)
+	CheckMessage("e-2", t, res, "number of parameter is not valid.")
+	CASE("e-3")
+	res = stub.MockInvoke("1", MakeParam("person.add_reputation", v[0], string(peer2), "contentkey", "1", "1"))
+	CheckStatus("e-3", t, res, 500)
+	CheckMessage("e-3", t, res, "number of parameter is not valid.")
+	CASE("e-4")
+	res = stub.MockInvoke("1", MakeParam("person.add_reputation", "test", string(peer2), "contentkey", "1"))
+	CheckStatus("e-3", t, res, 500)
+	CheckMessage("e-3", t, res, "data not found.")
+
 }
