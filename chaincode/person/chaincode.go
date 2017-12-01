@@ -45,7 +45,7 @@ func generateKey(stub shim.ChaincodeStubInterface, args []string) (string, error
 //   parameters :
 //     stub - object for accessing ledgers from chaincode
 //     args - parameters received from client
-//     nofElm - valid length of args
+//     nofElm - valid number of args
 //   return :
 //     - PERSON object
 //     - whether error object or nil
@@ -78,7 +78,7 @@ func Register(stub shim.ChaincodeStubInterface, args []string) (ret []interface{
 		return
 	}
 	D("key of PEER:%s", string(peerkey))
-	D("check if data is already exist")
+	D("check if data already exists")
 	key, err := cmn.VerifyForRegistration(stub, generateKey, []string{peerkey, args[0]})
 	if err != nil {
 		return
@@ -106,7 +106,7 @@ func Register(stub shim.ChaincodeStubInterface, args []string) (ret []interface{
 func Update(stub shim.ChaincodeStubInterface, args []string) (ret []interface{}, err error) {
 	D("check parameter")
 	if len(args) != 2 {
-		err = errors.New("length of parameter is not valid.")
+		err = errors.New("number of parameter is not valid.")
 		return
 	}
 	D("get PEER key for sender")
@@ -115,7 +115,7 @@ func Update(stub shim.ChaincodeStubInterface, args []string) (ret []interface{},
 		return
 	}
 	D("key of PEER:%s", string(peerkey))
-	D("check if data is exists")
+	D("check if data exists")
 	data, err := get_and_check(stub, []string{args[0]}, 1)
 	if err != nil {
 		return
@@ -156,17 +156,29 @@ func Get(stub shim.ChaincodeStubInterface, args []string) ([]interface{}, error)
 //     ret - return value
 //     err - either error object or nil
 func AddActivity(stub shim.ChaincodeStubInterface, args []string) (ret []interface{}, err error) {
-	D("check if data is exists")
+	D("check if data exists")
 	data, err := get_and_check(stub, args, 2)
 	if err != nil {
 		return
 	}
 	if data == nil {
-		err = errors.New("data is not exists")
+		err = errors.New("data not exists")
+		return
+	}
+	D("get PEER key for sender")
+	peerkey, err := peer.GetKey(stub)
+	if err != nil {
+		return
+	}
+	D("key of PEER:%s", string(peerkey))
+	D("check if data is owned by sender")
+	if data.PeerKey != peerkey {
+		D("not owned:%s, %s", data.PeerKey, peerkey)
+		err = errors.New("data not owned.")
 		return
 	}
 	D("put data into ledger")
-	(*data).Activity = append((*data).Activity, args[2])
+	(*data).Activity = append((*data).Activity, args[1])
 	err = cmn.Put(stub, args[0], (*data))
 	ret = []interface{}{[]byte(args[0])}
 	return
@@ -180,13 +192,13 @@ func AddActivity(stub shim.ChaincodeStubInterface, args []string) (ret []interfa
 //     ret - return value
 //     err - either error object or nil
 func AddReputation(stub shim.ChaincodeStubInterface, args []string) (ret []interface{}, err error) {
-	D("check if data is exists")
+	D("check if data exists")
 	data, err := get_and_check(stub, args, 4)
 	if err != nil {
 		return
 	}
 	if data == nil {
-		err = errors.New("data is not exists")
+		err = errors.New("data not exists")
 		return
 	}
 	// TODO:add check if setter is belong to sender peer
@@ -211,13 +223,13 @@ func AddReputation(stub shim.ChaincodeStubInterface, args []string) (ret []inter
 //     ret - return value
 //     err - either error object or nil
 func RemoveReputation(stub shim.ChaincodeStubInterface, args []string) (ret []interface{}, err error) {
-	D("check if data is exists")
+	D("check if data exists")
 	data, err := get_and_check(stub, args, 4)
 	if err != nil {
 		return
 	}
 	if data == nil {
-		err = errors.New("data is not exists")
+		err = errors.New("data  not exists")
 		return
 	}
 	D("put object which is removed target reputation data into ledger")
@@ -229,7 +241,7 @@ func RemoveReputation(stub shim.ChaincodeStubInterface, args []string) (ret []in
 			return
 		}
 	}
-	err = errors.New("reputation is not exists in target person")
+	err = errors.New("reputation not exists in target person")
 	ret = []interface{}{[]byte(args[0])}
 	return
 }

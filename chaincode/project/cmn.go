@@ -10,7 +10,7 @@ import (
 	"github.com/kenmazsyma/soila/chaincode/peer"
 )
 
-// GetKeyInPeer is a function for checking if project is exists in sender's peer
+// GetKeyInPeer is a function for checking if project exists in sender's peer
 //   parameters :
 //     stub - object for accessing ledgers from chaincode
 //     id - projectid

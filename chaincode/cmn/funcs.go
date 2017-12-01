@@ -51,7 +51,7 @@ type FuncGenKey func(shim.ChaincodeStubInterface, []string) (string, error)
 //     stub - object for accessing ledgers from chaincode
 //     genkey - function for generating key
 //     args - target parameters for verify
-//     nofElm - expected length of args
+//     nofElm - expected number of args
 //   returns :
 //     key - generated key
 //     err - whether error object or nil
@@ -61,13 +61,13 @@ func VerifyForRegistration(stub shim.ChaincodeStubInterface, genkey FuncGenKey, 
 	if err != nil {
 		return
 	}
-	D("check if data is already exists")
+	D("check if data already exists")
 	val, err := stub.GetState(key)
 	if err != nil {
 		return
 	}
 	if val != nil {
-		err = errors.New("data is already exists.")
+		err = errors.New("data already exists.")
 		return
 	}
 	return
@@ -77,36 +77,16 @@ func VerifyForRegistration(stub shim.ChaincodeStubInterface, genkey FuncGenKey, 
 //   parameters :
 //     stub - object for accessing ledgers from chaincode
 //     args - target parameters for verify
-//     nofElm - expected length of args
+//     nofElm - expected number of args
 //   returns :
 //     ret - data got from ledger
 //     err - whether error object or nil
 func VerifyForUpdate(stub shim.ChaincodeStubInterface, args []string, nofElm int) (ret []byte, err error) {
-	//	D("check count of parameters")
-	//	if len(args) != nofElm {
-	//		err = errors.New("Invalid Arguments")
-	//		return
-	//	}
-	//	D("generate key")
-	//	key, err = genkey(stub, args)
-	//	if err != nil {
-	//		return
-	//	}
-	//	D("check if data is already exists")
-	//	ret, err = stub.GetState(key)
-	//	if err != nil {
-	//		return
-	//	}
-	//	if ret == nil {
-	//		err = errors.New("data is not exists.")
-	//		return
-	//	}
-	//	return
 	D("check parameter")
 	if err = CheckParam(args, nofElm); err != nil {
 		return
 	}
-	D("check if data is exists")
+	D("check if data exists")
 	ret, err = stub.GetState(args[0])
 	if err != nil {
 		return
@@ -192,7 +172,7 @@ func ToJSON(o interface{}) (string, error) {
 
 func CheckParam(prm []string, validlen int) error {
 	if len(prm) != validlen {
-		return errors.New("length of parameter is not valid.")
+		return errors.New("number of parameter is not valid.")
 	}
 	return nil
 }

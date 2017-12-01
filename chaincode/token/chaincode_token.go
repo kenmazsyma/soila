@@ -80,10 +80,10 @@ func Register(stub shim.ChaincodeStubInterface, args []string) (key, res string,
 	// get key of PROJECT
 	projectkey := project.GetKeyInPeer(stub, args[0])
 	if len(projectkey) == 0 {
-		err = errors.New("project is not exist in sender's peer")
+		err = errors.New("project not exists in sender's peer")
 		return
 	}
-	// check if data is already exists
+	// check if data already exists
 	key, err = cmn.VerifyForRegistration(stub, generateKey, []string{projectkey, args[1]})
 	if err != nil {
 		return

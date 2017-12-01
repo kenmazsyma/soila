@@ -42,7 +42,7 @@ func TestMain(m *testing.M) {
 // ===================================
 
 func Test_Register1(t *testing.T) {
-	valid := "length of parameter is not valid."
+	valid := "number of parameter is not valid."
 	stub := CreateStub(invoke_list)
 	CASE("a-2")
 	stub.SetCreator([]byte("abcdef0123456789"))
@@ -54,7 +54,7 @@ func Test_Register1(t *testing.T) {
 }
 
 func Test_Register2(t *testing.T) {
-	valid := "data is already exists."
+	valid := "data already exists."
 	stub := CreateStub(invoke_list)
 	CASE("a-4")
 	stub.SetCreator([]byte("abcdef0123456789"))
@@ -106,12 +106,12 @@ func Test_Deregister1(t *testing.T) {
 	CASE("d-2")
 	res = stub.MockInvoke("1", MakeParam("peer.deregister"))
 	CheckStatus("d-2", t, res, 500)                                  // d-2
-	CheckMessage("d-2", t, res, "length of parameter is not valid.") // d-2
+	CheckMessage("d-2", t, res, "number of parameter is not valid.") // d-2
 	// deregister peer2
 	CASE("d-3")
 	res = stub.MockInvoke("1", MakeParam("peer.deregister", "1", "2"))
 	CheckStatus("d-3", t, res, 500)                                  // d-3
-	CheckMessage("d-3", t, res, "length of parameter is not valid.") // d-3
+	CheckMessage("d-3", t, res, "number of parameter is not valid.") // d-3
 }
 
 func Test_Deregister2(t *testing.T) {
@@ -163,12 +163,12 @@ func Test_Update(t *testing.T) {
 	CASE("c-2")
 	res = stub.MockInvoke("1", MakeParam("peer.update", v[0]))
 	CheckStatus("c-2", t, res, 500)                                  // c-2
-	CheckMessage("c-2", t, res, "length of parameter is not valid.") // c-2
+	CheckMessage("c-2", t, res, "number of parameter is not valid.") // c-2
 	// update2
 	CASE("c-3")
 	res = stub.MockInvoke("1", MakeParam("peer.update", v[0], "127.0.0.1", "255.255.255.0"))
 	CheckStatus("c-3", t, res, 500)                                  // c-3
-	CheckMessage("c-3", t, res, "length of parameter is not valid.") // c-3
+	CheckMessage("c-3", t, res, "number of parameter is not valid.") // c-3
 	// update3
 	CASE("c-4")
 	res = stub.MockInvoke("1", MakeParam("peer.update", "aaaaa", "127.0.0.1"))
