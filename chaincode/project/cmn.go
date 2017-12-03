@@ -4,56 +4,40 @@ Package project provdes chaincode for managing PROJECT data.
 package project
 
 import (
+	"encoding/json"
+	"errors"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
-	"github.com/kenmazsyma/soila/chaincode/cmn"
-	"github.com/kenmazsyma/soila/chaincode/log"
+	. "github.com/kenmazsyma/soila/chaincode/log"
 	"github.com/kenmazsyma/soila/chaincode/peer"
 )
 
-// GetKeyInPeer is a function for checking if project exists in sender's peer
+// IsOwn is a function for checking if project exists in sender's peer
 //   parameters :
 //     stub - object for accessing ledgers from chaincode
-//     id - projectid
+//     prjkey - projectkey
 //   return :
-//     - either key or empty string
-func GetKeyInPeer(stub shim.ChaincodeStubInterface, id string) string {
-	// get PEER key of sender
+//     rslt - true if project is not owned by sender's peer
+//     error - whether error object or nil
+func IsOwn(stub shim.ChaincodeStubInterface, prjkey string) (rslt bool, err error) {
+	D("get PEER key of sender")
+	rslt = false
 	peerkey, err := peer.GetKey(stub)
 	if err != nil {
-		log.Error(err.Error())
-		return ""
+		return
 	}
-	js, key, err := cmn.VerifyForUpdate(stub, generateKey, []string{peerkey, id}, 2)
+	D("get PROJECT data from ledger")
+	data, err := Get(stub, []string{prjkey})
 	if err != nil {
-		log.Error(err.Error())
-		return ""
+		return
 	}
-	if js != nil {
-		return key
+	if data == nil || len(data) < 2 {
+		err = errors.New("data not found.")
+		return
 	}
-	return ""
-}
-
-// IsOwn is a function for checking if project is owned by sender
-//   parameters :
-//     stub - object for accessing ledgers from chaincode
-//     key - projectkey
-//   returns :
-//     - true if sender own
-func IsOwn(stub shim.ChaincodeStubInterface, key string) bool {
-	_, val, err := stub.SplitCompositeKey(key)
-	if err != nil {
-		log.Error(err.Error())
-		return false
+	prj := Project{}
+	if err = json.Unmarshal(data[1].([]byte), &prj); err != nil {
+		return
 	}
-	if len(val) != 3 {
-		log.Error("key is not correct:" + key)
-		return false
-	}
-	valid, err := peer.CompareHash(stub, []byte(val[1]))
-	if err != nil {
-		log.Error(err.Error())
-		return false
-	}
-	return valid
+	rslt = (peerkey == prj.PeerKey)
+	return
 }

@@ -147,6 +147,7 @@ func Test_Register(t *testing.T) {
 	res = stub.MockInvoke("1", MakeParam("person.add_activity", v[0], "contentkey"))
 	CheckStatus("d-5", t, res, 500)
 	CheckMessage("d-5", t, res, "data not owned.")
+
 	CASE("e-1")
 	res = stub.MockInvoke("1", MakeParam("person.add_reputation", v[0], string(peer2), "contentkey", "1"))
 	CheckStatus("e-1", t, res, 200)
@@ -169,7 +170,7 @@ func Test_Register(t *testing.T) {
 	CheckMessage("e-3", t, res, "number of parameter is not valid.")
 	CASE("e-4")
 	res = stub.MockInvoke("1", MakeParam("person.add_reputation", "test", string(peer2), "contentkey", "1"))
-	CheckStatus("e-3", t, res, 500)
-	CheckMessage("e-3", t, res, "data not found.")
+	CheckStatus("e-4", t, res, 500)
+	CheckMessage("e-4", t, res, "data not found.")
 
 }

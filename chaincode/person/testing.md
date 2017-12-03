@@ -20,8 +20,11 @@
 |d-3||number of parameters>expect|Test_Register|
 |d-4||not found|Test_Register|
 |d-5||not owned|Test_Register|
-|e-1|AddReputation|success||
+|e-1|AddReputation|success|Test_Register|
 |e-2||number of parameters<expect|Test_Register|
 |e-3||number of parameters>expect|Test_Register|
 |e-4||not found|Test_Register|
-
+|f-1|RemoveReputation|success|not tested|
+|f-2||number of parameters<expect|not tested|
+|f-3||number of parameters>expect|not tested|
+|f-4||not found|not tested|

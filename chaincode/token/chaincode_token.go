@@ -8,7 +8,7 @@ import (
 	"errors"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	"github.com/kenmazsyma/soila/chaincode/cmn"
-	"github.com/kenmazsyma/soila/chaincode/log"
+	. "github.com/kenmazsyma/soila/chaincode/log"
 	"github.com/kenmazsyma/soila/chaincode/project"
 )
 
@@ -30,7 +30,7 @@ const KEY_TOKEN = "TOKEN"
 //     - key
 //     - whether error object or nil
 func generateKey(stub shim.ChaincodeStubInterface, args []string) (string, error) {
-	return stub.CreateCompositeKey(KEY_TOKEN, args[0:2])
+	return stub.CreateCompositeKey(KEY_TOKEN, []string{cmn.Sha1(args[0]), args[1]})
 }
 
 // get_and_check is a function for getting data of TOKEN
@@ -42,7 +42,7 @@ func generateKey(stub shim.ChaincodeStubInterface, args []string) (string, error
 //     - key
 //     - whether error object or nil
 func get_and_check(stub shim.ChaincodeStubInterface, pkey string) (rec Token, key string, err error) {
-	// get data from ledger
+	D("get data from ledger")
 	rec = Token{}
 	js, err := stub.GetState(pkey)
 	if err != nil {
@@ -52,13 +52,17 @@ func get_and_check(stub shim.ChaincodeStubInterface, pkey string) (rec Token, ke
 		err = errors.New("Data is not found in ledger")
 		return
 	}
-	// convert to TOKEN object
+	D("convert to TOKEN object")
 	err = json.Unmarshal(js, &rec)
 	if err != nil {
 		return
 	}
-	if own := project.IsOwn(stub, rec.Creator); !own {
-		err = errors.New("Token is not owned by sender.")
+	own, err := project.IsOwn(stub, rec.Creator)
+	if err != nil {
+		return
+	}
+	if !own {
+		err = errors.New("Sender not own specifying token.")
 		return
 	}
 	return
@@ -67,38 +71,41 @@ func get_and_check(stub shim.ChaincodeStubInterface, pkey string) (rec Token, ke
 // Register is a function for registering PROJECT to ledger
 //   parameters :
 //     stub - object for accessing ledgers from chaincode
-//     args - [projectid, id, name, data]
+//     args - [projectkey, id, name, data]
 //   return :
-//     key - key value
-//     res - response data
+//     ret - return value
 //     err - either error object or nil
-func Register(stub shim.ChaincodeStubInterface, args []string) (key, res string, err error) {
-	// check parameter
+func Register(stub shim.ChaincodeStubInterface, args []string) (ret []interface{}, err error) {
+	D("check parameter")
 	if err = cmn.CheckParam(args, 4); err != nil {
 		return
 	}
-	// get key of PROJECT
-	projectkey := project.GetKeyInPeer(stub, args[0])
-	if len(projectkey) == 0 {
-		err = errors.New("project not exists in sender's peer")
-		return
-	}
-	// check if data already exists
-	key, err = cmn.VerifyForRegistration(stub, generateKey, []string{projectkey, args[1]})
+	D("check if sender own specifying project")
+	own, err := project.IsOwn(stub, args[0])
 	if err != nil {
 		return
 	}
-	log.Debug(key)
-	// hash of description
+	if !own {
+		err = errors.New("specifying project is not owned by sender.")
+		return
+	}
+	D("check if data already exists")
+	key, err := cmn.VerifyForRegistration(stub, generateKey, []string{args[0], args[1]})
+	if err != nil {
+		return
+	}
+	D("generate hash of 'data' member:%s", key)
 	datahash := cmn.Sha1(args[3])
-	// put data into ledger
+	D("put data into ledger")
 	data := Token{
-		Creator:  projectkey,
+		Creator:  args[0],
 		Id:       args[1],
 		Name:     args[2],
 		DataHash: datahash,
 	}
 	err = cmn.Put(stub, key, data)
+	D("!!!!KEY:%s", key)
+	ret = []interface{}{[]byte(key)}
 	return
 }
 
@@ -107,9 +114,9 @@ func Register(stub shim.ChaincodeStubInterface, args []string) (key, res string,
 //     stub - object of chaincode information
 //     args - [tokenkey]
 //  return :
-//    - response data
-//    - either error object or nil
-func Get(stub shim.ChaincodeStubInterface, args []string) (key, res string, err error) {
+//     ret - return value
+//     err - either error object or nil
+func Get(stub shim.ChaincodeStubInterface, args []string) (ret []interface{}, err error) {
 	return cmn.Get(stub, args)
 }
 
@@ -118,20 +125,19 @@ func Get(stub shim.ChaincodeStubInterface, args []string) (key, res string, err 
 //     stub - object for accessing ledgers from chaincode
 //     args - [tokenkey, name, data]
 //   return :
-//     key - key value
-//     res - response data
+//     ret - return value
 //     err - either error object or nil
-func Update(stub shim.ChaincodeStubInterface, args []string) (key, res string, err error) {
-	// check parameter
+func Update(stub shim.ChaincodeStubInterface, args []string) (ret []interface{}, err error) {
+	D("check parameter")
 	if err = cmn.CheckParam(args, 3); err != nil {
 		return
 	}
-	// check if project which manages token is owned by sender
+	D("check if project which manages token is owned by sender")
 	data, key, err := get_and_check(stub, args[0])
 	if err != nil {
 		return
 	}
-	log.Debug(key)
+	D("put data into ledger:%s", key)
 	//TODO:Token information can be updated only in the case that token is not issued yet
 	data.Name = args[1]
 	data.DataHash = cmn.Sha1(args[2])
@@ -144,20 +150,19 @@ func Update(stub shim.ChaincodeStubInterface, args []string) (key, res string, e
 //     stub - object of chaincode information
 //     args - [tokenkey]
 //  return :
-//     key - key value
-//     res - response data
+//     ret - return value
 //     err - either error object or nil
-func Remove(stub shim.ChaincodeStubInterface, args []string) (key, res string, err error) {
+func Remove(stub shim.ChaincodeStubInterface, args []string) (ret []interface{}, err error) {
 	//TODO:Token information can be updated only in the case that token is not issued yet
-	// check parameter
+	D("check parameter")
 	if err = cmn.CheckParam(args, 3); err != nil {
 		return
 	}
-	_, key, err = get_and_check(stub, args[0])
+	_, key, err := get_and_check(stub, args[0])
 	if err != nil {
 		return
 	}
-	log.Debug(key)
+	D("delete data from ledger:%s", key)
 	err = cmn.Delete(stub, key)
 	return
 }

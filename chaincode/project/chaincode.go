@@ -7,7 +7,7 @@ import (
 	"encoding/json"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	"github.com/kenmazsyma/soila/chaincode/cmn"
-	"github.com/kenmazsyma/soila/chaincode/log"
+	. "github.com/kenmazsyma/soila/chaincode/log"
 	"github.com/kenmazsyma/soila/chaincode/peer"
 	"strconv"
 )
@@ -35,7 +35,7 @@ const KEY_TYPE = "PROJECT"
 //     - key
 //     - whether error object or nil
 func generateKey(stub shim.ChaincodeStubInterface, args []string) (string, error) {
-	return stub.CreateCompositeKey(KEY_TYPE, args)
+	return stub.CreateCompositeKey(KEY_TYPE, []string{cmn.Sha1(args[0]), args[1]})
 }
 
 // get_and_check is a function for getting data of PERSON
@@ -49,7 +49,7 @@ func generateKey(stub shim.ChaincodeStubInterface, args []string) (string, error
 //     - whether error object or nil
 func get_and_check(stub shim.ChaincodeStubInterface, args []string, nofElm int) (rec *Project, key string, err error) {
 	rec = nil
-	js, key, err := cmn.VerifyForUpdate(stub, generateKey, args, nofElm)
+	js, err := cmn.VerifyForUpdate(stub, args, nofElm)
 	if err != nil {
 		return
 	}
@@ -63,29 +63,30 @@ func get_and_check(stub shim.ChaincodeStubInterface, args []string, nofElm int) 
 //     stub - object for accessing ledgers from chaincode
 //     args - [id]
 //   return :
-//     - response data
-//     - error object if error occured
-func Register(stub shim.ChaincodeStubInterface, args []string) (key, res string, err error) {
-	// check parameter
+//     ret - return value
+//     err - either error object or nil
+func Register(stub shim.ChaincodeStubInterface, args []string) (ret []interface{}, err error) {
+	D("check parameter")
 	if err = cmn.CheckParam(args, 1); err != nil {
 		return
 	}
-	// get PEER key of sender
+	D("get PEER key of sender")
 	peerkey, err := peer.GetKey(stub)
 	if err != nil {
 		return
 	}
-	if key, err = cmn.VerifyForRegistration(stub, generateKey, []string{peerkey, args[0]}); err != nil {
+	key, err := cmn.VerifyForRegistration(stub, generateKey, []string{peerkey, args[0]})
+	if err != nil {
 		return
 	}
-	log.Debug(key)
-	// put data into ledger
+	D("put data into ledger:%s", key)
 	data := Project{
 		PeerKey: peerkey,
 		Id:      args[0],
 		Status:  STATUS_ACTIVE,
 	}
 	err = cmn.Put(stub, key, data)
+	ret = []interface{}{[]byte(key)}
 	return
 }
 
@@ -94,9 +95,9 @@ func Register(stub shim.ChaincodeStubInterface, args []string) (key, res string,
 //     stub - object of chaincode information
 //     args - [projectkey]
 //  return :
-//    - response data
-//    - either error object or nil
-func Get(stub shim.ChaincodeStubInterface, args []string) (key, res string, err error) {
+//     ret - return value
+//     err - either error object or nil
+func Get(stub shim.ChaincodeStubInterface, args []string) (ret []interface{}, err error) {
 	return cmn.Get(stub, args)
 }
 
@@ -105,23 +106,23 @@ func Get(stub shim.ChaincodeStubInterface, args []string) (key, res string, err 
 //     stub - object for accessing ledgers from chaincode
 //     args - [peerkey, id, status]
 //   return :
-//     - response data
-//     - error object if error occured
-func UpdateStatus(stub shim.ChaincodeStubInterface, args []string) (key, res string, err error) {
+//     ret - return value
+//     err - either error object or nil
+func UpdateStatus(stub shim.ChaincodeStubInterface, args []string) (ret []interface{}, err error) {
 	data, key, err := get_and_check(stub, args, 3)
 	if err != nil {
 		return
 	}
 	val, err := strconv.ParseInt(args[2], 10, 64)
 	if err != nil {
-		log.Info("status parameter is not correct.")
+		Info("status sent from client is not correct.")
 		return
 	}
 	if int64(data.Status) == val {
-		log.Info("status parameter is not different from ledger.")
+		Info("status send from client is not different from ledger.")
 		return
 	}
-	log.Debug(key)
+	D("put data into ledger:%s", key)
 	data.Status = STATUS(val)
 	err = cmn.Put(stub, key, data)
 	return

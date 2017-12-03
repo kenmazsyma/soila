@@ -27,9 +27,8 @@ const KEY_TOKENOWN = "TOKENOWN"
 //     stub - object for accessing ledgers from chaincode
 //     args - [projectid, tokenid, count]
 //   return :
-//     key - key value
-//     res - response data
+//     ret - return value
 //     err - either error object or nil
-func Publish(stub shim.ChaincodeStubInterface, args []string) (key, res string, err error) {
+func Publish(stub shim.ChaincodeStubInterface, args []string) (ret []interface{}, err error) {
 	return
 }
