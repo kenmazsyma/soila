@@ -39,6 +39,9 @@ func P2o(payload []byte) (ret []interface{}, err error) {
 }
 
 func UnmarshalPayload(payload []byte) (ret []interface{}, err error) {
+	if len(payload) == 0 {
+		return
+	}
 	val, err := P2o(payload)
 	if err != nil {
 		return

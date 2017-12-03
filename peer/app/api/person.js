@@ -21,15 +21,10 @@ module.exports = {
 						[prm.id, prm.name, prm.pass, prm.profile]
 				).then(res => {
 					log.debug('query for inserting to person table succeeded.');
-					resolve({
-						result : 'OK'
-					});
+					resolve();
 				}).catch(e=> {
 					log.debug('query for inserting to person table failed.');
-					resolve({
-						result : 'ERROR',
-						error : JSON.stringify(e)
-					});
+					reject(e);
 				});
 			} catch (e) {
 				log.error('query for inserting to person table raise exception.');
@@ -37,17 +32,50 @@ module.exports = {
 			}
 		}).then(() => {
 			try {
-			return bc.cli.invoke('soila_chain', 'person.put', [prm.id, JSON.stringify(prm)])
-				.then(rslt => {
-					for ( var i in rslt) {
-						log.info(i + ':' + rslt[i]);
-					}
-					//console.log(util.str.b2s(rslt.payload.data));
-					return Promise.resolve(rslt);
-				});
+				return bc.cli.invoke('soila_chain', 'person.register', 
+								[prm.id, JSON.stringify({
+									id : prm.id,
+									name : prm.name,
+									profile : prm.profile
+								})]);
 			} catch (e) {
 				log.error(e);
+				return Promise.resolve({
+					status:500,
+					message:e
+				});
 			}
+		}).then(rslt => {
+			if (rslt.status===200) {
+				try {
+					return db.query("update person set ledgerkey=$1 where id=$2", [rslt.data[0], prm.id]).then(() => {
+						return Promise.resolve('OK');
+					}).catch(e=> {
+						// TODO:necessary to remove data from ledger
+						log.error(e);
+						return Promise.reject(e);
+					});
+				} catch (e) {
+					log.debug('12347');
+					log.error(e);
+					return Promise.reject(e);
+				}
+			} else {
+				try {
+					return db.query("delete from person where id=$1", [prm.id]).then(() => {
+						return Promise.reject(rslt.message);
+					}).catch(e=> {
+						log.error(e);
+						// TODO:necessary to resolve mismatch between db and ledger
+						return Promise.reject(e);
+					});
+				} catch (e) {
+					log.error(e);
+					// TODO:necessary to resolve mismatch between db and ledger
+					return Promise.reject(e);
+				}
+			}
+			
 		});
 	},
 	delete : function(prm) {

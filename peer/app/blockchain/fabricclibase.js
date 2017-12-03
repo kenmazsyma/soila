@@ -7,6 +7,12 @@ var fs = require('fs');
 var os = require('os');
 var log = require('../common/logger')('blockchain.fabricclientbase');
 
+
+function convertPayload(data) {
+	let enc = new Buffer(data, 'base64').toString();
+	return JSON.parse(enc);
+}
+
 FabricCliBase = class {
 
 	constructor(chid, conf) {
@@ -189,15 +195,44 @@ FabricCliBase = class {
 	}
 
 	invoke(ccid, funcname, args) {
+		log.info('data:' + funcname);
+		let enc = [];
+		args.forEach(function(v) {
+			enc.push(new Buffer(v).toString('base64'));
+			log.info(enc[enc.length-1]);
+		});
 		let request = {
 			chaincodeId : ccid,
 			targets : this.targets,
 			fcn: funcname,
-			args: args,
+			args: enc,
 			chainId : 'soila',
 			txId: this.client.newTransactionID()
 		};
-		return this.channel.sendTransactionProposal(request);
+		return this.channel.sendTransactionProposal(request).then((rslt) => {
+			if (!rslt||!rslt[0]||!rslt[0][0]||!rslt[0][0].response) {
+				return Promise.resolve({
+					status : 500,
+					message : 'failed to get response from ledger.'
+				});
+			}
+			let rslt0 = rslt[0][0].response;
+			let ret;
+			try {
+				ret = {
+					status : rslt0.status,
+					message : rslt0.message,
+					data : convertPayload(rslt0.payload)
+				};
+			} catch (e) {
+				log.error(e);
+				ret = {
+					status : 500,
+					message : 'failed to convert payload data received from legder.'
+				};
+			}
+			return Promise.resolve(ret);
+		});
 	}
 
 	install(ccid, path, ver) {

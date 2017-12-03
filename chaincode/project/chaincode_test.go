@@ -77,7 +77,7 @@ func prepare(stub *shim.MockStub) (key string, personkey string, err error) {
 		return
 	}
 	fmt.Printf("PEERKEY:%s", key)
-	res = stub.MockInvoke("1", MakeParam("person.register", "12345"))
+	res = stub.MockInvoke("1", MakeParam("person.register", "12345", "12345"))
 	if personkey, err = getKeyFromPayload(res); err != nil {
 		return
 	}
@@ -97,7 +97,7 @@ func Test_Register(t *testing.T) {
 	_, _, err := prepare(stub)
 	if err != nil {
 		t.Errorf(err.Error())
-		return false
+		return
 	}
 	CASE("a-1")
 	res := stub.MockInvoke("1", MakeParam("project.register", "12345"))

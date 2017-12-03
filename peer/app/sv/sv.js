@@ -33,7 +33,7 @@ const cont_type = {
 function getType(url) {
 	let typ = url.split('.');
 	typ = typ[typ.length-1];
-	return typ||'';
+	return cont_type[typ] ? typ : '';
 }
 
 function conttype(url) {
@@ -41,7 +41,7 @@ function conttype(url) {
 }
 
 function request(req, res) {
-	if (getType(req.url)==='json') {
+	if (getType(req.url)==='') {
 		return callApi(req, res);
 	}
 	fs.readFile(__dirname + '/static' + req.url, 'utf-8', function(err, data){
@@ -76,7 +76,7 @@ function callApi(req, res) {
 			}
 		});
 	}).then((data)=> {
-		/([^\./]*)\.([^\./]*)\.json$/.exec(req.url);
+		/([^\./]*)\.([^\./]*)$/.exec(req.url);
 		api.call(RegExp.$1, RegExp.$2, data).then(rslt =>  {
 			res.writeHead(200, {'Content-Type': 'application/json'});
 			res.write(rslt);
