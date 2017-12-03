@@ -49,7 +49,7 @@ func Register(stub shim.ChaincodeStubInterface, args []string) (ret []interface{
 		return
 	}
 	D("verify if peer is already registered")
-	info.Hash = cmn.Sha1B(sig)
+	info.Hash = cmn.Sha512B(sig)
 	D("hash:%s", info.Hash)
 	key, err := cmn.VerifyForRegistration(stub, generateKey, []string{string(info.Hash)})
 	if err != nil {

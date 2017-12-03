@@ -4,7 +4,7 @@ Package cmn provides common functions for chaincode.
 package cmn
 
 import (
-	"crypto/sha1"
+	"crypto/sha512"
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
@@ -120,41 +120,37 @@ func Get(stub shim.ChaincodeStubInterface, args []string) (ret []interface{}, er
 	return
 }
 
-// Sha1 is a function for generate sha1 hash of target string
+// Sha512 is a function for generate sha512 hash of target string
 //   parameters :
 //     stub - object for accessing ledgers from chaincode
 //   returns :
-//     - sha1 hash
-func Sha1(v string) string {
-	h := sha1.New()
+//     - sha512 hash
+func Sha512(v string) string {
+	h := sha512.New()
 	h.Write([]byte(v))
 	return hex.EncodeToString(h.Sum(nil))
 }
 
-// Sha1Ar is a function for generate sha1 hash of target string
+// Sha512Ar is a function for generate sha512 hash of target string
 //   parameters :
 //     stub - object for accessing ledgers from chaincode
 //   returns :
-//     - sha1 hash
-func Sha1Ar(v []string) string {
-	h := sha1.New()
-	for ix, vv := range v {
-		if ix == 0 {
-			h.Write([]byte(vv))
-		} else {
-			h.Sum([]byte(vv))
-		}
+//     - sha512 hash
+func Sha512Ar(v []string) string {
+	h := sha512.New()
+	for _, vv := range v {
+		h.Write([]byte(vv))
 	}
 	return hex.EncodeToString(h.Sum(nil))
 }
 
-// Sha1B is a function for generate sha1 hash of target binary data
+// Sha512B is a function for generate sha512 hash of target binary data
 //   parameters :
 //     stub - object for accessing ledgers from chaincode
 //   returns :
-//     - sha1 hash
-func Sha1B(v []byte) string {
-	h := sha1.New()
+//     - sha512 hash
+func Sha512B(v []byte) string {
+	h := sha512.New()
 	h.Write(v)
 	return hex.EncodeToString(h.Sum(nil))
 }

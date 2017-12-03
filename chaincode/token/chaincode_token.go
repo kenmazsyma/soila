@@ -30,7 +30,7 @@ const KEY_TOKEN = "TOKEN"
 //     - key
 //     - whether error object or nil
 func generateKey(stub shim.ChaincodeStubInterface, args []string) (string, error) {
-	return stub.CreateCompositeKey(KEY_TOKEN, []string{cmn.Sha1(args[0]), args[1]})
+	return stub.CreateCompositeKey(KEY_TOKEN, []string{cmn.Sha512(args[0]), args[1]})
 }
 
 // get_and_check is a function for getting data of TOKEN
@@ -95,7 +95,7 @@ func Register(stub shim.ChaincodeStubInterface, args []string) (ret []interface{
 		return
 	}
 	D("generate hash of 'data' member:%s", key)
-	datahash := cmn.Sha1(args[3])
+	datahash := cmn.Sha512(args[3])
 	D("put data into ledger")
 	data := Token{
 		Creator:  args[0],
@@ -140,7 +140,7 @@ func Update(stub shim.ChaincodeStubInterface, args []string) (ret []interface{},
 	D("put data into ledger:%s", key)
 	//TODO:Token information can be updated only in the case that token is not issued yet
 	data.Name = args[1]
-	data.DataHash = cmn.Sha1(args[2])
+	data.DataHash = cmn.Sha512(args[2])
 	err = cmn.Put(stub, key, data)
 	return
 }

@@ -6,7 +6,7 @@ let allconf = require('config');
 let pool = null;
 
 module.exports = {
-	init : function() {
+	init : () => {
 		pool = new Pool ({
 			user: allconf.DBEnv.user,
 			host: allconf.DBEnv.host,
@@ -15,7 +15,7 @@ module.exports = {
 			port: allconf.DBEnv.port
 		});
 	},
-	term : async function() {
+	term : async () => {
 		if (pool) {
 			let p = pool;
 			pool = null;
@@ -24,7 +24,7 @@ module.exports = {
 			return 'ok';
 		}
 	},
-	query : function(sql, param) {
+	query : (sql, param) => {
 		if (param===undefined) {
 			return pool.query(sql);
 		}

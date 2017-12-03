@@ -37,7 +37,7 @@ const KEY_TYPE = "PERSON"
 //     - key
 //     - whether error object or nil
 func generateKey(stub shim.ChaincodeStubInterface, args []string) (string, error) {
-	return stub.CreateCompositeKey(KEY_TYPE, []string{cmn.Sha1(args[0]), args[1]})
+	return stub.CreateCompositeKey(KEY_TYPE, []string{cmn.Sha512(args[0]), args[1]})
 }
 
 // get_and_check is a function for getting data of PERSON
@@ -108,7 +108,7 @@ func Register(stub shim.ChaincodeStubInterface, args []string) (ret []interface{
 	data := Person{
 		PeerKey:    peerkey,
 		Id:         args[0],
-		Ver:        []string{cmn.Sha1(args[1])},
+		Ver:        []string{cmn.Sha512(args[1])},
 		Activity:   []string{},
 		Reputation: []PersonReputation{},
 	}
@@ -152,7 +152,7 @@ func Update(stub shim.ChaincodeStubInterface, args []string) (ret []interface{},
 		return
 	}
 	D("put data into ledger")
-	(*data).Ver = append((*data).Ver, cmn.Sha1(args[1]))
+	(*data).Ver = append((*data).Ver, cmn.Sha512(args[1]))
 	err = cmn.Put(stub, args[0], (*data))
 	ret = []interface{}{[]byte(args[0])}
 	return

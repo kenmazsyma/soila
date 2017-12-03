@@ -21,7 +21,7 @@ func GetHash(stub shim.ChaincodeStubInterface) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return cmn.Sha1B(creator), nil
+	return cmn.Sha512B(creator), nil
 }
 
 // GetKey is a function for getting key of sender's PEER data

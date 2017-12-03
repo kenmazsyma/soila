@@ -84,7 +84,7 @@ func Test_Get(t *testing.T) {
 	CheckStatus("b-1", t, res, 200)
 	ret, _ = P2o(res.Payload)
 	fmt.Printf("payload:%s\n", string(res.Payload))
-	expect := "{\"Hash\":\"d80e5e55dd4128844827a53d7363045485f08751\",\"Address\":\"1\"}"
+	expect := "{\"Hash\":\"cc6e41f3c71832a71d88c8bd833d1790e158c360698de61d9f957afa816b32048d8d1a6a2fb105f09130975ef3b596cadcdec8fed4f0a7793141b375460141c3\",\"Address\":\"1\"}"
 	CheckPayload("b-1", t, res, []interface{}{v[0], expect})
 	// get data by key which is not registered
 	CASE("b-2")
@@ -188,7 +188,7 @@ func Test_Update(t *testing.T) {
 	res = stub.MockInvoke("1", MakeParam("peer.get", v[0]))
 	CheckStatus("c-1", t, res, 200)
 	fmt.Printf("payload:%s\n", string(res.Payload))
-	expect := "{\"Hash\":\"d80e5e55dd4128844827a53d7363045485f08751\",\"Address\":\"127.0.0.1\"}"
+	expect := "{\"Hash\":\"cc6e41f3c71832a71d88c8bd833d1790e158c360698de61d9f957afa816b32048d8d1a6a2fb105f09130975ef3b596cadcdec8fed4f0a7793141b375460141c3\",\"Address\":\"127.0.0.1\"}"
 	CheckPayload("c-1", t, res, []interface{}{v[0], expect}) // c-1
 	// update6
 	CASE("c-6")

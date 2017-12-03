@@ -35,7 +35,7 @@ const KEY_TYPE = "PROJECT"
 //     - key
 //     - whether error object or nil
 func generateKey(stub shim.ChaincodeStubInterface, args []string) (string, error) {
-	return stub.CreateCompositeKey(KEY_TYPE, []string{cmn.Sha1(args[0]), args[1]})
+	return stub.CreateCompositeKey(KEY_TYPE, []string{cmn.Sha512(args[0]), args[1]})
 }
 
 // get_and_check is a function for getting data of PERSON

@@ -3,5 +3,5 @@ CREATE TABLE person(
 	name CHAR(128),
 	pass CHAR(64),
 	profile VARCHAR(1024),
-	ledgerkey CHAR(96)
+	ledgerkey CHAR(256)
 );
