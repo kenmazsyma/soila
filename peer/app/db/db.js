@@ -1,34 +1,31 @@
 'use_strict'
 
-const { Pool } = require('pg');
-let allconf = require('config');
-
-let pool = null;
+const pgp = require('pg-promise')();
+const allconf = require('config');
+const db = pgp({
+	host: allconf.DBEnv.host,
+	port: allconf.DBEnv.port,
+	user: allconf.DBEnv.user,
+	password: allconf.DBEnv.pass,
+	database: allconf.DBEnv.dbname
+});
 
 module.exports = {
-	init : () => {
-		pool = new Pool ({
-			user: allconf.DBEnv.user,
-			host: allconf.DBEnv.host,
-			database: allconf.DBEnv.dbname,
-			password: allconf.DBEnv.pass,
-			port: allconf.DBEnv.port
-		});
+	init : async () => {
 	},
 	term : async () => {
-		if (pool) {
-			let p = pool;
-			pool = null;
-			return p.end();
-		} else {
-			return 'ok';
-		}
 	},
-	query : (sql, param) => {
+	any : async (sql, param) => {
 		if (param===undefined) {
-			return pool.query(sql);
+			return db.any(sql);
 		}
-		return pool.query(sql, param);
-	}
+		return db.any(sql, param);
+	},
+	none : async (sql, param) => {
+		if (param===undefined) {
+			return db.none(sql);
+		}
+		return db.none(sql, param);
+	},
 };
 

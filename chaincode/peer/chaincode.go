@@ -13,8 +13,8 @@ import (
 )
 
 type Peer struct {
-	Hash    string // hash of peer's signature[key]
-	Address string // url of wenapp / webapi
+	Hash    string `json:"hash"`    // hash of peer's signature[key]
+	Address string `json:"address"` // url of wenapp / webapi
 }
 
 const KEY_TYPE = "PEER"

@@ -3,5 +3,6 @@ CREATE TABLE person(
 	name CHAR(128),
 	pass CHAR(64),
 	profile VARCHAR(1024),
-	ledgerkey CHAR(256)
+	key CHAR(256)
 );
+CREATE INDEX person_key1 ON person(key);
