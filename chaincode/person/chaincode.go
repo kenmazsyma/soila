@@ -136,8 +136,13 @@ func Update(stub shim.ChaincodeStubInterface, args []string) (ret []interface{},
 		return
 	}
 	D("key of PEER:%s", string(peerkey))
+	D("generate personkey by peerkey(%s) and personid(%s)", string(peerkey), args[0])
+	key, err := generateKey(stub, []string{string(peerkey), args[0]})
+	if err != nil {
+		return
+	}
 	D("check if data exists")
-	data, err := get_and_check(stub, []string{args[0]}, 1)
+	data, err := get_and_check(stub, []string{key}, 1)
 	if err != nil {
 		return
 	}
@@ -145,16 +150,10 @@ func Update(stub shim.ChaincodeStubInterface, args []string) (ret []interface{},
 		err = errors.New("data not found.")
 		return
 	}
-	D("check if data is owned by sender")
-	if data.PeerKey != peerkey {
-		D("not owned:%s, %s", data.PeerKey, peerkey)
-		err = errors.New("data not owned.")
-		return
-	}
 	D("put data into ledger")
 	(*data).Ver = append((*data).Ver, cmn.Sha512(args[1]))
-	err = cmn.Put(stub, args[0], (*data))
-	ret = []interface{}{[]byte(args[0])}
+	err = cmn.Put(stub, key, (*data))
+	ret = []interface{}{[]byte(key)}
 	return
 }
 

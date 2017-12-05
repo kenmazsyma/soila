@@ -37,11 +37,11 @@ module.exports = {
 		}
 		// register PERSON data to ledger
 		let rslt = await bc.cli.invoke('soila_chain', 'person.register', 
-						[prm.id, JSON.stringify({
+						util.str.s2b64([prm.id, JSON.stringify({
 							id : prm.id,
 							name : prm.name,
 							profile : prm.profile
-						})]);
+						})]));
 		// update PERSON data based on the result of registering on ledger
 		if (rslt.status&&rslt.status===200) {
 			try {
@@ -153,7 +153,7 @@ module.exports = {
 		}
 		// update PERSON data on ledger
 		rslt = await bc.cli.invoke('soila_chain', 'person.update', 
-						[prm.id, JSON.stringify(rslt)]);
+						util.str.s2b64([rslt[0].id, JSON.stringify(rslt[0])]));
 		if (rslt.status&&rslt.status===200) {
 			return rslt.data[0];
 		} else {

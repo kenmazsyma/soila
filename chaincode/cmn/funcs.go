@@ -86,7 +86,7 @@ func VerifyForUpdate(stub shim.ChaincodeStubInterface, args []string, nofElm int
 	if err = CheckParam(args, nofElm); err != nil {
 		return
 	}
-	D("check if data exists")
+	D("check if data exists:%s", args[0])
 	ret, err = stub.GetState(args[0])
 	if err != nil {
 		return

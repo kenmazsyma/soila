@@ -1,8 +1,8 @@
 CREATE TABLE person(
-	id CHAR(32) PRIMARY KEY,
-	name CHAR(128),
-	pass CHAR(64),
+	id VARCHAR(32) PRIMARY KEY,
+	name VARCHAR(128),
+	pass VARCHAR(64),
 	profile VARCHAR(1024),
-	key CHAR(256)
+	key VARCHAR(256)
 );
 CREATE INDEX person_key1 ON person(key);

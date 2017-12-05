@@ -97,6 +97,7 @@ describe('person', () => {
 	});
 	describe('get', () => {
 		it('found', done => {
+			console.log('person.get:' + key);
 			person.get({key:key}).then(rslt => {
 				console.log(rslt);
 				if (rslt&&rslt.found) {
@@ -109,7 +110,7 @@ describe('person', () => {
 			});
 		});
 		it('not found', done => {
-			person.get({key:'1'}).then(rslt => {
+			person.get({key:'AFBF'}).then(rslt => {
 				if (rslt&&rslt.found) {
 					console.log(rslt);
 					done('got unexpected data.');

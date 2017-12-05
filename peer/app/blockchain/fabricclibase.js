@@ -5,11 +5,12 @@ var path = require('path');
 var util = require('util');
 var fs = require('fs');
 var os = require('os');
+var cmn = require('../common/util');
 var log = require('../common/logger')('blockchain.fabricclientbase');
 
 
 function convertPayload(data) {
-	let enc = new Buffer(data, 'base64').toString();
+	let enc = cmn.str.b642s(data);
 	return JSON.parse(enc);
 }
 
@@ -196,16 +197,16 @@ FabricCliBase = class {
 
 	invoke(ccid, funcname, args) {
 		log.info('data:' + funcname);
-		let enc = [];
-		args.forEach(function(v) {
-			enc.push(new Buffer(v).toString('base64'));
-			log.info(enc[enc.length-1]);
-		});
+		//let enc = [];
+		//args.forEach(function(v) {
+		//	enc.push(new Buffer(v).toString('base64'));
+		//	log.info(enc[enc.length-1]);
+		//});
 		let request = {
 			chaincodeId : ccid,
 			targets : this.targets,
 			fcn: funcname,
-			args: enc,
+			args: args/*enc*/,
 			chainId : 'soila',
 			txId: this.client.newTransactionID()
 		};
