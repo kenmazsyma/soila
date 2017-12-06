@@ -19,6 +19,7 @@ module.exports = {
 		try {
 			let rslt = await db.any("select id from person where id=$1", [prm.id]);
 			if (rslt.length>0) {
+				console.log('!!!!!' + JSON.stringify(rslt));
 				throw prm.id + ' is already registerd.';
 			}
 		} catch (e) {
@@ -55,10 +56,11 @@ module.exports = {
 			}
 		} else {
 			try {
-				return await db.none(
+				await db.none(
 						"delete from person where id=$1", 
 						[prm.id]
 				);
+				throw rslt;
 			} catch (e) {
 				log.error('failed to delete PERSON record on db');
 				// TODO:necessary to resolve mismatch between db and ledger
@@ -104,7 +106,7 @@ module.exports = {
 		}
 		return {found:false, peer:rslt.data[1].address};
 	},
-	getbykey : async prm => {
+	getbyid : async prm => {
 		try {
 			let rslt = await db.any(
 					"select id, name, profile, key from person where id=$1",

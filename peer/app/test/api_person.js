@@ -71,7 +71,7 @@ describe('person', () => {
 	let key = '';
 	describe('getbyid', () => {
 		it('success', done => {
-			person.getbykey({id:'test'}).then(rslt => {
+			person.getbyid({id:'test'}).then(rslt => {
 				if (rslt&&rslt.id) {
 					done();
 					key = rslt.key;
@@ -84,7 +84,7 @@ describe('person', () => {
 		});
 
 		it('not found', done => {
-			person.getbykey({id:'test1'}).then(rslt => {
+			person.getbyid({id:'test1'}).then(rslt => {
 				if (rslt.length>0) {
 					done('got unexpected data.');
 				} else {
