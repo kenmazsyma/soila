@@ -39,7 +39,8 @@ describe('person', () => {
 		done();
 	});
 	describe('register', () => {
-		it('success', done => {
+		it('success', function(done) {
+			this.timeout(30000);
 			person.register({
 				"id":"test",
 				"pass":"testtest",
@@ -75,6 +76,7 @@ describe('person', () => {
 				if (rslt&&rslt.id) {
 					done();
 					key = rslt.key;
+					console.log('KEY:' + key);
 				} else {
 					done('failed to get data');
 				}
@@ -125,7 +127,8 @@ describe('person', () => {
 		});
 	});
 	describe('update', () => {
-		it('success', done => {
+		it('success', function(done) {
+			this.timeout(30000);
 			person.update({id:'test',pass:'testtest2', name:'あいうえお'}).then(rslt => {
 				done();
 			}).catch (e => {

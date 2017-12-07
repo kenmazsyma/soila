@@ -252,13 +252,14 @@ FabricCliBase = class {
 		}
 		if (all_good) {
 			let txPromise = [];
-			this.eventhub.forEach((hub) => {
+			this.eventhub.forEach(hub => {
+				hub.connect();
 				txPromise.push(new Promise((resolve, reject) => {
 					let handle = setTimeout(() => {
-						this.term();
+						hub.disconnect();
 						reject();
 					}, 30000);
-					let deployId = txid;
+					let deployId = txid.getTransactionID();
 					hub.registerTxEvent(deployId, (tx, code) => {
 						clearTimeout(handle);
 						hub.unregisterTxEvent(deployId);
@@ -267,9 +268,11 @@ FabricCliBase = class {
 							log.error('transaction(' + tx + ') was invalid, code = ' + code);
 							reject();
 						} else {
-							log.info('transactioni(' + tx + ') was valid.');
+							log.info('transaction(' + tx + ') was valid.');
 							resolve();
 						}
+					}, (err) => {
+						console.log(err);
 					});
 				}));
 			});

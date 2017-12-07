@@ -19,7 +19,6 @@ module.exports = {
 		try {
 			let rslt = await db.any("select id from person where id=$1", [prm.id]);
 			if (rslt.length>0) {
-				console.log('!!!!!' + JSON.stringify(rslt));
 				throw prm.id + ' is already registerd.';
 			}
 		} catch (e) {
@@ -55,6 +54,7 @@ module.exports = {
 				throw e;
 			}
 		} else {
+			console.log(rslt.message);
 			try {
 				await db.none(
 						"delete from person where id=$1", 
