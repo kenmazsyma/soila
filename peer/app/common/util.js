@@ -1,5 +1,7 @@
 'use_strict'
 
+let os = require('os');
+
 let to = src => {
 	return (typeof(src)==='string') ? new Buffer(src).toString('base64') : src;
 }
@@ -38,4 +40,25 @@ module.exports = {
 			return ret;
 		}
 	},
+	net : {
+		local : () => {
+			let ifs = os.networkInterfaces();
+			let ret = {
+				v4 : [],
+				v6 : []
+			};
+			let map = {
+				'IPv4' : 'v4',
+				'IPv6' : 'v6'
+			};
+			for (let i in ifs) {
+				ifs[i].forEach((elm) => {
+					if (!elm.internal) {
+						map[elm.family]&&ret[map[elm.family]].push(elm.address);
+					}
+				});
+			}
+			return ret;
+		}
+	}
 }
