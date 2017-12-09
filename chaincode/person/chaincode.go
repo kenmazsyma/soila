@@ -36,8 +36,9 @@ const KEY_TYPE = "PERSON"
 //   return :
 //     - key
 //     - whether error object or nil
-func generateKey(stub shim.ChaincodeStubInterface, args []string) (string, error) {
-	return stub.CreateCompositeKey(KEY_TYPE, []string{cmn.Sha512(args[0]), args[1]})
+func generateKey(stub shim.ChaincodeStubInterface, args interface{}) (string, error) {
+	prm := args.([]string)
+	return stub.CreateCompositeKey(KEY_TYPE, []string{cmn.Sha512(prm[0]), prm[1]})
 }
 
 // get_and_check is a function for getting data of PERSON
@@ -165,7 +166,7 @@ func Update(stub shim.ChaincodeStubInterface, args []string) (ret []interface{},
 //     - return value
 //     - either error object or nil
 func Get(stub shim.ChaincodeStubInterface, args []string) ([]interface{}, error) {
-	return cmn.Get(stub, args)
+	return cmn.Get(stub, args[0])
 }
 
 // AddActivity is a function for append hash of activity information for PERSON

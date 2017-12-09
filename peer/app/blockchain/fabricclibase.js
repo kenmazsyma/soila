@@ -226,7 +226,7 @@ FabricCliBase = class {
 				hub.disconnect();
 			});
 			this.client = null;
-			this.channelID = null;
+		//	this.channelID = null;
 			this.channel = null;
 			this.genesis_block = null;
 			this.targets = null;

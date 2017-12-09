@@ -34,8 +34,9 @@ const KEY_TYPE = "PROJECT"
 //   return :
 //     - key
 //     - whether error object or nil
-func generateKey(stub shim.ChaincodeStubInterface, args []string) (string, error) {
-	return stub.CreateCompositeKey(KEY_TYPE, []string{cmn.Sha512(args[0]), args[1]})
+func generateKey(stub shim.ChaincodeStubInterface, args interface{}) (string, error) {
+	prm := args.([]string)
+	return stub.CreateCompositeKey(KEY_TYPE, []string{cmn.Sha512(prm[0]), prm[1]})
 }
 
 // get_and_check is a function for getting data of PERSON
@@ -98,7 +99,7 @@ func Register(stub shim.ChaincodeStubInterface, args []string) (ret []interface{
 //     ret - return value
 //     err - either error object or nil
 func Get(stub shim.ChaincodeStubInterface, args []string) (ret []interface{}, err error) {
-	return cmn.Get(stub, args)
+	return cmn.Get(stub, args[0])
 }
 
 // UpdateStatus is a function for updating PROJECT staus

@@ -17,7 +17,5 @@
 |c-5||not own|Test_Update|
 |c-6||same data|Test_Update|
 |d-1|Deregister|success|Test_Deregister4|
-|d-2||number of parameters<expect|Test_Deregister1|
-|d-3||number of parameters>expect|Test_Deregister1|
-|d-4||not found|Test_Deregister2|
-|d-5||not own|Test_Deregister2|
+|d-2||number of parameters>expect|Test_Deregister1|
+|d-3||not found|Test_Deregister2|

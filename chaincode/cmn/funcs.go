@@ -44,7 +44,7 @@ func Delete(stub shim.ChaincodeStubInterface, key string) (err error) {
 	return stub.DelState(key)
 }
 
-type FuncGenKey func(shim.ChaincodeStubInterface, []string) (string, error)
+type FuncGenKey func(shim.ChaincodeStubInterface, interface{}) (string, error)
 
 // VerifyForRegistration is a function for verifying if parameters is valid before registering.
 //   parameters :
@@ -55,7 +55,7 @@ type FuncGenKey func(shim.ChaincodeStubInterface, []string) (string, error)
 //   returns :
 //     key - generated key
 //     err - whether error object or nil
-func VerifyForRegistration(stub shim.ChaincodeStubInterface, genkey FuncGenKey, args []string) (key string, err error) {
+func VerifyForRegistration(stub shim.ChaincodeStubInterface, genkey FuncGenKey, args interface{}) (key string, err error) {
 	D("generate key")
 	key, err = genkey(stub, args)
 	if err != nil {
@@ -101,14 +101,14 @@ func VerifyForUpdate(stub shim.ChaincodeStubInterface, args []string, nofElm int
 // Get is a function for getting data from ledger
 //   parameters :
 //     stub - object for accessing ledgers from chaincode
-//     args - target parameters for verify
+//     key - target parameters for verify
 //   returns :
 //     key - key of data
 //     res - data got from ledger
 //     err - whether error obejct or nil
-func Get(stub shim.ChaincodeStubInterface, args []string) (ret []interface{}, err error) {
-	D("get data from ledger:%s", args[0])
-	data, err := stub.GetState(args[0])
+func Get(stub shim.ChaincodeStubInterface, key string) (ret []interface{}, err error) {
+	D("get data from ledger:%s", key)
+	data, err := stub.GetState(key)
 	if err != nil {
 		return
 	}
@@ -116,7 +116,7 @@ func Get(stub shim.ChaincodeStubInterface, args []string) (ret []interface{}, er
 		err = errors.New("data not found.")
 		return
 	}
-	ret = []interface{}{[]byte(args[0]), data}
+	ret = []interface{}{[]byte(key), data}
 	return
 }
 
