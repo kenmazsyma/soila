@@ -5,9 +5,9 @@
 |No|target|pattern|test function|
 |---|:--|:--|:--|
 |a-1|Register|success|Test_register|
-|a-2||number of parameters<expect|not tested|
-|a-3||number of parameters>expect|not tested|
-|a-4||duplicate|not tested|
+|a-2||number of parameters<expect|Test_register|
+|a-3||number of parameters>expect|Test_register|
+|a-4||duplicate|Test_register|
 |b-1|Update|success|not tested|
 |b-2||number of parameters<expect|not tested|
 |b-3||number of parameters>expect|not tested|

@@ -108,4 +108,17 @@ func Test_Register(t *testing.T) {
 		return
 	}
 	fmt.Printf("\nPROJECTKEY:%s\n", prjkey)
+	CASE("a-2")
+	res = stub.MockInvoke("1", MakeParam("project.register"))
+	CheckStatus("a-2", t, res, 500)
+	CheckMessage("a-2", t, res, "number of parameter is not valid.")
+	CASE("a-3")
+	res = stub.MockInvoke("1", MakeParam("project.register", "1", "2"))
+	CheckStatus("a-3", t, res, 500)
+	CheckMessage("a-3", t, res, "number of parameter is not valid.")
+	CASE("a-4")
+	res = stub.MockInvoke("1", MakeParam("project.register", "12345"))
+	CheckStatus("a-4", t, res, 500)
+	CheckMessage("a-4", t, res, "data already exists.")
+
 }
