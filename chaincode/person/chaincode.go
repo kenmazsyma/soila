@@ -165,7 +165,10 @@ func Update(stub shim.ChaincodeStubInterface, args []string) (ret []interface{},
 //   return :
 //     - return value
 //     - either error object or nil
-func Get(stub shim.ChaincodeStubInterface, args []string) ([]interface{}, error) {
+func Get(stub shim.ChaincodeStubInterface, args []string) (data []interface{}, err error) {
+	if err = cmn.CheckParam(args, 1); err != nil {
+		return
+	}
 	return cmn.Get(stub, args[0])
 }
 

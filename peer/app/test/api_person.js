@@ -10,7 +10,7 @@ async function term() {
 }
 
 describe('person', () => {
-	before(done => {
+	before(function(done) {
 		//bc.cli.chaincode = {
 		//	kv : {},
 		//	'person.register' : (args) => {
@@ -20,6 +20,7 @@ describe('person', () => {
 		//	'peer.get' : (args) => {
 		//	}
 		//};
+		this.timeout(30000);
 		bc.cli.init().then(() => {
 			return bc.cli.prepareChannel();
 		}).then(()=> {
@@ -84,7 +85,6 @@ describe('person', () => {
 				done(e);
 			});
 		});
-
 		it('not found', done => {
 			person.getbyid({id:'test1'}).then(rslt => {
 				if (rslt.length>0) {
@@ -136,6 +136,5 @@ describe('person', () => {
 			});
 		});
 	});
-
 });
 

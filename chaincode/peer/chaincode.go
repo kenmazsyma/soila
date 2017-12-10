@@ -108,7 +108,6 @@ func Update(stub shim.ChaincodeStubInterface, args []string) (ret []interface{},
 	if err != nil {
 		return
 	}
-	D("udpate data")
 	data.Address = args[0]
 	err = cmn.Put(stub, key, data)
 	ret = []interface{}{[]byte(key)}

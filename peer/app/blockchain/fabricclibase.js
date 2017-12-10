@@ -167,8 +167,10 @@ FabricCliBase = class {
 		};
 		try {
 			let results = await this.channel.sendTransactionProposal(request);
-			await this.sendTransaction(request.txId, results);
 			let rslt0 = results[0][0].response;
+	//		if (rslt0.status&&rslt0.status===200) {
+				await this.sendTransaction(request.txId, results);
+	//		}
 			return {
 				status : rslt0.status,
 				message : rslt0.message,

@@ -4,9 +4,10 @@ let log = require('../common/logger')('api.list');
 
 module.exports = {
 	cls : {
+		peer : require('./peer'),
 		person : require('./person')
 	},
-	call : async (cn, mn, json) => {
+	call : async function (cn, mn, json) {
 		log.debug('api.call:' + cn + ':' + mn);
 		let cls = this.cls[cn];
 		if (cls===undefined||cls[mn]===undefined) {

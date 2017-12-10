@@ -59,6 +59,13 @@ func (t *CC) Invoke(stub shim.ChaincodeStubInterface) pb.Response {
 	if err != nil {
 		return shim.Error(err.Error())
 	}
+	//	rest := []string{}
+	//	for _, v := range ret {
+	//		rest = append(rest, string(v.([]byte)))
+	//		D("%s => %s", funcname, v.([]byte))
+	//	}
+	//	js, err := json.Marshal(rest)
+	//	D("%s => %s", funcname, js)
 	js, err := json.Marshal(ret)
 	if err != nil {
 		return shim.Error(err.Error())

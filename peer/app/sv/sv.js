@@ -41,6 +41,7 @@ function conttype(url) {
 }
 
 function request(req, res) {
+	console.log(req.url);
 	if (getType(req.url)==='') {
 		return callApi(req, res);
 	}

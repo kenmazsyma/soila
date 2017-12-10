@@ -7,7 +7,8 @@ async function term() {
 }
 
 describe('peer', () => {
-	before(done => {
+	before(function(done) {
+		this.timeout(30000);
 		bc.cli.init().then(() => {
 			return bc.cli.prepareChannel();
 		}).then(()=> {
@@ -22,22 +23,24 @@ describe('peer', () => {
 		done();
 	});
 	
-	describe('update1', done => {
-		it('not found', function(done) {
-			this.timeout(30000);
-			peer.update().then(rslt => {
-				done();
-			}).catch(e => {
-				done(e);
-			});
-		});
-	});
+//	describe('not found case', () => {
+//		it('update', function(done) {
+//			this.timeout(30000);
+//			peer.update().then(rslt => {
+//				done('data found in spite of not registering yet');
+//			}).catch(e => {
+//				done();
+//			});
+//		});
+//	});
 
-
-	describe('register', done => {
+	let key;
+	describe('register', () => {
 		it('success', function(done) {
 			this.timeout(30000);
 			peer.register().then(rslt => {
+				key = rslt;
+				console.log('KEY:' + key);
 				done();
 			}).catch(e => {
 				done(e);
@@ -45,27 +48,70 @@ describe('peer', () => {
 		}, e => {
 			console.log(e);
 		});
-		it('duplicate', function(done) {
-			this.timeout(30000);
-			peer.register().then(rslt => {
-				done();
-			}).catch(e => {
-				done(e);
-			});
-		}, e => {
-			console.log(e);
-		});
+//		it('duplicate', function(done) {
+//			this.timeout(30000);
+//			peer.register().then(rslt => {
+//				done('succeeded in spite of duplicating');
+//			}).catch(e => {
+//				done();
+//			});
+//		}, e => {
+//			console.log(e);
+//		});
 	});
 
-	describe('update2', done => {
+//	describe('update2', () => {
+//		it('success', function(done) {
+//			this.timeout(30000);
+//			peer.update().then(rslt => {
+//				done();
+//			}).catch(e => {
+//				done(e);
+//			});
+//		});
+//	});
+
+	describe('get', () => {
 		it('success', function(done) {
 			this.timeout(30000);
-			peer.update().then(rslt => {
-				done();
+			peer.get(key).then(rslt => {
+				if (rslt&&rslt.address) {
+					done();
+				} else {
+					done('failed to get data:' + JSON.stringify(rslt));
+				}
 			}).catch(e => {
 				done(e);
 			});
 		});
+//		it('not found', function(done) {
+//			this.timeout(30000);
+//			peer.get('test').then(rslt => {
+//				done('found in spite of not existing');
+//			}).catch(e => {
+//				done();
+//			});
+//		});
 	});
+
+
+//	describe('deregister', () => {
+//		it('success', function(done) {
+//			this.timeout(30000);
+//			peer.deregister().then(rslt => {
+//				done();
+//			}).catch(e => {
+//				done(e);
+//			});
+//		});
+//		it('not found', function(done) {
+//			this.timeout(30000);
+//			peer.deregister().then(rslt => {
+//				done('succeeded in spite of already deregistered');
+//			}).catch(e => {
+//				done();
+//			});
+//		});
+//	});
 
 });

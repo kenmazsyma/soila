@@ -23,7 +23,7 @@ Rpc = {
 		var call = function() {
 			$.ajax({
 				type: "POST",
-				url: 'http://' + location.host + '/api',
+				url: 'http://' + location.host + '/' + method,
 				data: JSON.stringify(data),
 				dataType: 'json',
 				contentType: "application/json",
